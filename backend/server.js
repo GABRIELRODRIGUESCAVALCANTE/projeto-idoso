@@ -25,13 +25,16 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // Limite de 10MB
+    fileSize: 15 * 1024 * 1024 // Limite de 15MB
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    const isImage = file.mimetype.startsWith('image/');
+    const isPdf = file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
+
+    if (isImage || isPdf) {
       cb(null, true);
     } else {
-      cb(new Error('Formato inválido. Por favor, envie uma foto ou imagem do documento (JPG, PNG, WEBP).'));
+      cb(new Error('Formato inválido. Por favor, envie uma foto (JPG, PNG) ou arquivo PDF do documento.'));
     }
   }
 });
@@ -59,9 +62,13 @@ app.post('/api/analyze-document', upload.single('document'), async (req, res) =>
 
     console.log(`[LOG] Recebido documento para análise: ${req.file.originalname} (${(req.file.size / 1024).toFixed(1)} KB, ${req.file.mimetype})`);
 
+    const mimeType = (req.file.mimetype === 'application/x-pdf' || req.file.originalname.toLowerCase().endsWith('.pdf'))
+      ? 'application/pdf'
+      : req.file.mimetype;
+
     const analysis = await analyzeDocumentImage({
       buffer: req.file.buffer,
-      mimeType: req.file.mimetype
+      mimeType
     });
 
     console.log(`[LOG] Análise concluída com sucesso: "${analysis.tipoDocumento}"`);
