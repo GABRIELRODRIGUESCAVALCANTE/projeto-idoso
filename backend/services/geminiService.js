@@ -14,10 +14,10 @@ export async function analyzeDocumentImage({ buffer, mimeType }) {
   const ai = new GoogleGenAI({ apiKey: cleanApiKey });
 
   const base64Data = buffer.toString('base64');
-
   try {
+    const modelName = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: modelName,
       contents: [
         {
           role: 'user',

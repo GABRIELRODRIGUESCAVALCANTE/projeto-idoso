@@ -42,7 +42,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     service: 'Tradutor de Burocracia & Saúde API',
-    model: 'gemini-2.5-flash',
+    model: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
     geminiKeyConfigured: hasKey
   });
 });
