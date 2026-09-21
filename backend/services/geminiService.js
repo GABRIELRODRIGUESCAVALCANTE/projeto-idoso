@@ -10,7 +10,8 @@ export async function analyzeDocumentImage({ buffer, mimeType }) {
     );
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const cleanApiKey = apiKey.trim();
+  const ai = new GoogleGenAI({ apiKey: cleanApiKey });
 
   const base64Data = buffer.toString('base64');
 
