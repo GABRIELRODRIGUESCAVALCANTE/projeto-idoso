@@ -60,6 +60,21 @@ app.post('/api/analyze-document', upload.single('document'), async (req, res) =>
       });
     }
 
+    // Validação estrita de assinatura de bytes (bloqueia executáveis, scripts e malwares disfarçados)
+    const buf = req.file.buffer;
+    const isJpeg = buf.length >= 3 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF;
+    const isPng = buf.length >= 4 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47;
+    const isPdf = buf.length >= 4 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46; // %PDF
+    const isWebp = buf.length >= 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP';
+
+    if (!isJpeg && !isPng && !isPdf && !isWebp) {
+      console.warn(`[SEGURANÇA] Arquivo rejeitado por assinatura inválida: ${req.file.originalname}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Arquivo com assinatura inválida. Por segurança, apenas imagens e documentos PDF autênticos são aceitos.'
+      });
+    }
+
     console.log(`[LOG] Recebido documento para análise: ${req.file.originalname} (${(req.file.size / 1024).toFixed(1)} KB, ${req.file.mimetype})`);
 
     const mimeType = (req.file.mimetype === 'application/x-pdf' || req.file.originalname.toLowerCase().endsWith('.pdf'))
