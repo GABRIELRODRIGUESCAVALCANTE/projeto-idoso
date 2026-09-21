@@ -17,14 +17,14 @@ export async function analyzeDocumentImage({ buffer, mimeType }) {
   const ai = new GoogleGenAI({ apiKey: cleanApiKey });
   const base64Data = buffer.toString('base64');
 
-  // Lista de modelos resilientes em ordem de prioridade
+  // Lista de modelos resilientes em ordem de prioridade (flash-lite tem resposta instantânea e sem fila de 503)
   const configured = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : [];
   const candidateModels = [
     ...configured,
+    'gemini-flash-lite-latest',
     'gemini-3.6-flash',
-    'gemini-3.5-flash',
-    'gemini-3.7-flash',
-    'gemini-flash-latest'
+    'gemini-flash-latest',
+    'gemini-3.5-flash'
   ];
   const uniqueModels = [...new Set(candidateModels)];
 
