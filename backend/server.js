@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import dotenv from 'dotenv';
-import { analyzeDocumentImage } from './services/geminiService.js';
+import { analyzeDocumentImages, answerDocumentQuestion } from './services/geminiService.js';
 
 dotenv.config();
 
@@ -50,49 +50,78 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Endpoint principal: Análise Multimodal de Documentos
-app.post('/api/analyze-document', upload.single('document'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: 'Nenhuma foto ou arquivo de documento foi enviado.'
+// Endpoint principal: Análise Multimodal de Documentos (suporta frente e verso ou página única)
+app.post(
+  '/api/analyze-document',
+  upload.fields([
+    { name: 'documents', maxCount: 4 },
+    { name: 'document', maxCount: 1 }
+  ]),
+  async (req, res) => {
+    try {
+      // Coleta todos os arquivos enviados (retrocompatível com 'document' único e 'documents' array)
+      const rawFiles = [];
+      if (req.files) {
+        if (Array.isArray(req.files)) {
+          rawFiles.push(...req.files);
+        } else {
+          if (req.files.documents) rawFiles.push(...req.files.documents);
+          if (req.files.document) rawFiles.push(...req.files.document);
+        }
+      } else if (req.file) {
+        rawFiles.push(req.file);
+      }
+
+      if (rawFiles.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Nenhuma foto ou arquivo de documento foi enviado.'
+        });
+      }
+
+      // Validação estrita de assinatura de bytes para CADA arquivo enviado
+      const validFiles = [];
+
+      for (const file of rawFiles) {
+        const buf = file.buffer;
+        const isJpeg = buf.length >= 3 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF;
+        const isPng = buf.length >= 4 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47;
+        const isPdf = buf.length >= 4 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46; // %PDF
+        const isWebp = buf.length >= 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP';
+
+        if (!isJpeg && !isPng && !isPdf && !isWebp) {
+          console.warn(`[SEGURANÇA] Arquivo rejeitado por assinatura inválida: ${file.originalname}`);
+          return res.status(400).json({
+            success: false,
+            error: `O arquivo "${file.originalname}" possui assinatura inválida. Apenas fotos (JPG, PNG, WEBP) e documentos PDF autênticos são aceitos.`
+          });
+        }
+
+        const mimeType = (file.mimetype === 'application/x-pdf' || file.originalname.toLowerCase().endsWith('.pdf'))
+          ? 'application/pdf'
+          : file.mimetype;
+
+        validFiles.push({
+          buffer: file.buffer,
+          mimeType,
+          originalname: file.originalname,
+          size: file.size
+        });
+      }
+
+      console.log(`[LOG] Recebido(s) ${validFiles.length} arquivo(s) para análise: ${validFiles.map(f => `${f.originalname} (${(f.size / 1024).toFixed(1)} KB)`).join(', ')}`);
+
+      const analysis = await analyzeDocumentImages({
+        files: validFiles
       });
-    }
 
-    // Validação estrita de assinatura de bytes (bloqueia executáveis, scripts e malwares disfarçados)
-    const buf = req.file.buffer;
-    const isJpeg = buf.length >= 3 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF;
-    const isPng = buf.length >= 4 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47;
-    const isPdf = buf.length >= 4 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46; // %PDF
-    const isWebp = buf.length >= 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP';
+      console.log(`[LOG] Análise de ${validFiles.length} página(s) concluída com sucesso: "${analysis.tipoDocumento}"`);
 
-    if (!isJpeg && !isPng && !isPdf && !isWebp) {
-      console.warn(`[SEGURANÇA] Arquivo rejeitado por assinatura inválida: ${req.file.originalname}`);
-      return res.status(400).json({
-        success: false,
-        error: 'Arquivo com assinatura inválida. Por segurança, apenas imagens e documentos PDF autênticos são aceitos.'
+      return res.status(200).json({
+        success: true,
+        data: analysis
       });
-    }
-
-    console.log(`[LOG] Recebido documento para análise: ${req.file.originalname} (${(req.file.size / 1024).toFixed(1)} KB, ${req.file.mimetype})`);
-
-    const mimeType = (req.file.mimetype === 'application/x-pdf' || req.file.originalname.toLowerCase().endsWith('.pdf'))
-      ? 'application/pdf'
-      : req.file.mimetype;
-
-    const analysis = await analyzeDocumentImage({
-      buffer: req.file.buffer,
-      mimeType
-    });
-
-    console.log(`[LOG] Análise concluída com sucesso: "${analysis.tipoDocumento}"`);
-
-    return res.status(200).json({
-      success: true,
-      data: analysis
-    });
-  } catch (error) {
+    } catch (error) {
     console.error('[ERRO] Falha ao analisar documento:', error.message);
 
     const isApiKeyError = error.message.includes('GEMINI_API_KEY');
@@ -102,6 +131,53 @@ app.post('/api/analyze-document', upload.single('document'), async (req, res) =>
     });
   }
 });
+
+// Endpoint secundário: Tira-Dúvidas com IA sobre o Documento
+app.post('/api/ask-question', async (req, res) => {
+  try {
+    const { documentData, question, history } = req.body;
+
+    if (!question || typeof question !== 'string' || question.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Por favor, digite ou fale a sua dúvida.'
+      });
+    }
+
+    if (!documentData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Dados do documento não fornecidos para responder à dúvida.'
+      });
+    }
+
+    console.log(`[LOG] Recebida dúvida sobre "${documentData.tipoDocumento || 'documento'}": "${question.slice(0, 80)}"`);
+
+    const answer = await answerDocumentQuestion({
+      documentData,
+      question: question.trim(),
+      history: Array.isArray(history) ? history : []
+    });
+
+    console.log(`[LOG] Dúvida respondida com sucesso!`);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        question: question.trim(),
+        answer
+      }
+    });
+  } catch (error) {
+    console.error('[ERRO] Falha ao responder dúvida:', error.message);
+    const isApiKeyError = error.message.includes('GEMINI_API_KEY');
+    return res.status(isApiKeyError ? 401 : 500).json({
+      success: false,
+      error: error.message || 'Não foi possível responder sua dúvida no momento. Tente novamente.'
+    });
+  }
+});
+
 
 // Tratamento de erros do multer e gerais
 app.use((err, req, res, next) => {

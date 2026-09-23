@@ -1,111 +1,187 @@
 import React, { useRef, useState } from 'react';
-import { Camera, ImageUp, RotateCcw, Sparkles, Lightbulb, CheckCircle2, FileText, FileCheck } from 'lucide-react';
+import { 
+  Camera, 
+  ImageUp, 
+  RotateCcw, 
+  Sparkles, 
+  Lightbulb, 
+  CheckCircle2, 
+  FileText, 
+  FileCheck, 
+  Plus, 
+  Trash2,
+  Layers
+} from 'lucide-react';
 
 export default function DocumentUploader({ onAnalyze, isLoading }) {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const cameraInputRef = useRef(null);
-  const fileInputRef = useRef(null);
+  // Estados para suportar Frente e Verso ou arquivo PDF único
+  const [frontFile, setFrontFile] = useState(null);
+  const [frontPreview, setFrontPreview] = useState(null);
 
-  const handleFileChange = (e) => {
+  const [backFile, setBackFile] = useState(null);
+  const [backPreview, setBackPreview] = useState(null);
+
+  const [pdfFile, setPdfFile] = useState(null);
+
+  // Referências para os inputs de câmera e arquivo
+  const cameraFrontRef = useRef(null);
+  const fileFrontRef = useRef(null);
+  const cameraBackRef = useRef(null);
+  const fileBackRef = useRef(null);
+  const pdfInputRef = useRef(null);
+
+  const handleFrontChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      processFile(file);
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        handlePdfSelection(file);
+        return;
+      }
+      setPdfFile(null);
+      setFrontFile(file);
+      if (frontPreview) URL.revokeObjectURL(frontPreview);
+      setFrontPreview(URL.createObjectURL(file));
     }
   };
 
-  const processFile = (file) => {
-    const isImage = file.type.startsWith('image/');
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-
-    if (!isImage && !isPdf) {
-      alert('Por favor, selecione uma foto válida (JPG, PNG) ou um arquivo PDF do documento.');
-      return;
+  const handleBackChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBackFile(file);
+      if (backPreview) URL.revokeObjectURL(backPreview);
+      setBackPreview(URL.createObjectURL(file));
     }
-
-    setSelectedFile(file);
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
   };
 
-  const handleClear = () => {
-    setSelectedFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  const handlePdfSelection = (file) => {
+    handleClearAll();
+    setPdfFile(file);
+  };
+
+  const handleClearAll = () => {
+    if (frontPreview) URL.revokeObjectURL(frontPreview);
+    if (backPreview) URL.revokeObjectURL(backPreview);
+    setFrontFile(null);
+    setFrontPreview(null);
+    setBackFile(null);
+    setBackPreview(null);
+    setPdfFile(null);
+
+    if (cameraFrontRef.current) cameraFrontRef.current.value = '';
+    if (fileFrontRef.current) fileFrontRef.current.value = '';
+    if (cameraBackRef.current) cameraBackRef.current.value = '';
+    if (fileBackRef.current) fileBackRef.current.value = '';
+    if (pdfInputRef.current) pdfInputRef.current.value = '';
+  };
+
+  const handleRemoveBack = () => {
+    if (backPreview) URL.revokeObjectURL(backPreview);
+    setBackFile(null);
+    setBackPreview(null);
+    if (cameraBackRef.current) cameraBackRef.current.value = '';
+    if (fileBackRef.current) fileBackRef.current.value = '';
   };
 
   const handleStartAnalysis = () => {
-    if (selectedFile && !isLoading) {
-      onAnalyze(selectedFile);
+    if (isLoading) return;
+
+    if (pdfFile) {
+      onAnalyze([pdfFile]);
+    } else if (frontFile) {
+      const filesToSend = [frontFile];
+      if (backFile) {
+        filesToSend.push(backFile);
+      }
+      onAnalyze(filesToSend);
     }
   };
-
-  const isPdf = selectedFile?.type === 'application/pdf' || selectedFile?.name?.toLowerCase().endsWith('.pdf');
 
   const formatFileSize = (bytes) => {
     if (!bytes) return '';
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
-    }
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const hasAnyUpload = Boolean(frontFile || pdfFile);
+
   return (
     <section className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-6">
-      {/* Inputs invisíveis para Câmera e Arquivo (Imagens e PDFs) */}
+      {/* Inputs Ocultos de Captura */}
       <input
-        ref={cameraInputRef}
+        ref={cameraFrontRef}
         type="file"
         accept="image/*"
         capture="environment"
         className="hidden"
-        id="camera-capture-input"
-        onChange={handleFileChange}
+        onChange={handleFrontChange}
       />
       <input
-        ref={fileInputRef}
+        ref={fileFrontRef}
         type="file"
         accept="image/*,application/pdf,.pdf"
         className="hidden"
-        id="file-upload-input"
-        onChange={handleFileChange}
+        onChange={handleFrontChange}
+      />
+      <input
+        ref={cameraBackRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleBackChange}
+      />
+      <input
+        ref={fileBackRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleBackChange}
+      />
+      <input
+        ref={pdfInputRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handlePdfSelection(file);
+        }}
       />
 
-      {!selectedFile ? (
-        <div className="space-y-4">
+      {/* CASO 1: Nenhum documento selecionado ainda */}
+      {!hasAnyUpload && (
+        <div className="space-y-5">
           <div className="text-center py-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">
               Como você quer enviar seu documento?
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 max-w-md mx-auto">
-              Tire uma foto, escolha uma imagem ou envie um arquivo <strong>PDF</strong> do seu celular ou computador.
+            <p className="text-sm sm:text-base text-slate-600 max-w-lg mx-auto">
+              Você pode fotografar a <strong>Frente e o Verso</strong> do papel ou enviar um arquivo <strong>PDF</strong> completo.
             </p>
           </div>
 
-          {/* Botões Grandes e Acessíveis para Idosos e Todos */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            {/* Botão Câmera */}
+          {/* Botões Grandes e Acessíveis */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Opção 1: Tirar foto com a câmera */}
             <button
-              onClick={() => cameraInputRef.current?.click()}
+              onClick={() => cameraFrontRef.current?.click()}
               className="flex items-center sm:flex-col justify-center gap-3 p-5 sm:p-7 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white font-bold text-base sm:text-lg shadow-lg shadow-sky-500/25 hover:from-sky-600 hover:to-blue-700 active:scale-[0.98] transition-all"
-              aria-label="Abrir câmera do celular para tirar foto"
+              aria-label="Abrir câmera do celular para fotografar a frente do documento"
             >
               <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
                 <Camera className="w-8 h-8 text-white" />
               </div>
               <div className="text-left sm:text-center">
-                <span className="block text-lg sm:text-xl font-extrabold">Tirar Foto Agora</span>
-                <span className="block text-xs sm:text-sm font-normal text-sky-100">Usa a câmera do seu celular</span>
+                <span className="block text-lg sm:text-xl font-extrabold">Tirar Foto com a Câmera</span>
+                <span className="block text-xs sm:text-sm font-normal text-sky-100">
+                  Fotografe a frente (e depois o verso se quiser)
+                </span>
               </div>
             </button>
 
-            {/* Botão Escolher Arquivo / Imagem / PDF */}
+            {/* Opção 2: Escolher imagem da Galeria ou PDF */}
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => fileFrontRef.current?.click()}
               className="flex items-center sm:flex-col justify-center gap-3 p-5 sm:p-7 rounded-2xl bg-slate-50 border-2 border-slate-300 hover:border-sky-500 text-slate-800 font-bold text-base sm:text-lg hover:bg-sky-50/50 active:scale-[0.98] transition-all"
               aria-label="Escolher foto da galeria ou arquivo PDF"
             >
@@ -113,37 +189,33 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
                 <ImageUp className="w-8 h-8" />
               </div>
               <div className="text-left sm:text-center">
-                <span className="block text-lg sm:text-xl font-extrabold">Enviar Foto ou PDF</span>
-                <span className="block text-xs sm:text-sm font-normal text-slate-500">Escolha foto ou documento PDF</span>
+                <span className="block text-lg sm:text-xl font-extrabold">Escolher da Galeria ou PDF</span>
+                <span className="block text-xs sm:text-sm font-normal text-slate-500">
+                  Fotos salvas ou arquivo digital em PDF
+                </span>
               </div>
             </button>
           </div>
 
           {/* Dica Amigável de Acessibilidade */}
-          <div className="mt-4 p-3.5 bg-amber-50 rounded-2xl border border-amber-200/80 flex items-start gap-3">
+          <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200/80 flex items-start gap-3">
             <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">
-              <strong>Formatos aceitos:</strong> Fotos de documentos (JPG, PNG) ou arquivos digitais em <strong>PDF</strong> (contas de luz/água baixadas do banco ou notificações digitais).
+              <strong>Dica importante:</strong> Se o seu documento tem informações atrás (como instruções de remédio ou código de barras no verso da conta), você poderá adicionar o <strong>verso</strong> logo em seguida!
             </p>
           </div>
         </div>
-      ) : (
-        /* Preview do Arquivo Selecionado (Foto ou PDF) */
+      )}
+
+      {/* CASO 2: Documento PDF Carregado */}
+      {pdfFile && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              {isPdf ? (
-                <>
-                  <FileCheck className="w-3.5 h-3.5 text-emerald-600" /> PDF Carregado
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Foto Carregada
-                </>
-              )}
+              <FileCheck className="w-3.5 h-3.5 text-emerald-600" /> Documento PDF Pronto
             </span>
             <button
-              onClick={handleClear}
+              onClick={handleClearAll}
               disabled={isLoading}
               className="text-xs sm:text-sm text-slate-500 hover:text-rose-600 font-semibold flex items-center gap-1.5 p-1 disabled:opacity-40"
             >
@@ -151,33 +223,21 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
             </button>
           </div>
 
-          {/* Renderização condicional do Preview: Imagem vs PDF */}
-          {isPdf ? (
-            <div className="rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/50 p-6 sm:p-8 flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-3 shadow-sm">
-                <FileText className="w-9 h-9" />
-              </div>
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 max-w-sm truncate">
-                {selectedFile.name}
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Documento em formato PDF ({formatFileSize(selectedFile.size)})
-              </p>
-              <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-100/70 px-3 py-1 rounded-full">
-                Pronto para leitura por IA
-              </span>
+          <div className="rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/50 p-6 sm:p-8 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-3 shadow-sm">
+              <FileText className="w-9 h-9" />
             </div>
-          ) : (
-            <div className="relative rounded-2xl overflow-hidden bg-slate-950/5 border border-slate-200 max-h-80 flex items-center justify-center">
-              <img
-                src={previewUrl}
-                alt="Pré-visualização do documento enviado"
-                className="w-full h-auto max-h-80 object-contain rounded-2xl"
-              />
-            </div>
-          )}
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 max-w-sm truncate">
+              {pdfFile.name}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Documento em formato PDF ({formatFileSize(pdfFile.size)})
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-100/70 px-3 py-1 rounded-full">
+              Páginas prontas para leitura pela IA
+            </span>
+          </div>
 
-          {/* Botão de Ação Principal: Decodificar com IA */}
           <button
             onClick={handleStartAnalysis}
             disabled={isLoading}
@@ -185,6 +245,127 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
           >
             <Sparkles className="w-6 h-6 animate-spin-slow" />
             <span>Explicar Este Documento Para Mim</span>
+          </button>
+        </div>
+      )}
+
+      {/* CASO 3: Fotos (Frente Carregada + Slot Opcional de Verso) */}
+      {frontFile && !pdfFile && (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
+                <Layers className="w-3.5 h-3.5 text-sky-600" />
+                {backFile ? 'Frente e Verso Prontos' : 'Apenas Frente Adicionada'}
+              </span>
+            </div>
+            <button
+              onClick={handleClearAll}
+              disabled={isLoading}
+              className="text-xs sm:text-sm text-slate-500 hover:text-rose-600 font-semibold flex items-center gap-1.5 p-1 disabled:opacity-40"
+            >
+              <RotateCcw className="w-4 h-4" /> Recomeçar
+            </button>
+          </div>
+
+          {/* Cards Lado a Lado (Frente e Verso) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* CARD 1: FRENTE */}
+            <div className="border border-slate-200 rounded-2xl p-3.5 bg-slate-50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  1. Foto da Frente
+                </span>
+                <button
+                  onClick={() => cameraFrontRef.current?.click()}
+                  disabled={isLoading}
+                  className="text-xs font-semibold text-sky-600 hover:underline"
+                >
+                  Tirar outra
+                </button>
+              </div>
+
+              <div className="relative rounded-xl overflow-hidden bg-black/5 border border-slate-200 h-48 flex items-center justify-center">
+                <img
+                  src={frontPreview}
+                  alt="Foto da frente do documento"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
+
+            {/* CARD 2: VERSO */}
+            <div className="border border-slate-200 rounded-2xl p-3.5 bg-slate-50 space-y-2 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                  {backFile ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <span className="w-4 h-4 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center text-[10px] font-bold">
+                      2
+                    </span>
+                  )}
+                  2. Foto do Verso <span className="text-[10px] font-normal text-slate-500">(Opcional)</span>
+                </span>
+                {backFile && (
+                  <button
+                    onClick={handleRemoveBack}
+                    disabled={isLoading}
+                    title="Remover foto do verso"
+                    className="text-xs font-semibold text-rose-600 hover:underline flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remover
+                  </button>
+                )}
+              </div>
+
+              {backFile ? (
+                <div className="relative rounded-xl overflow-hidden bg-black/5 border border-slate-200 h-48 flex items-center justify-center">
+                  <img
+                    src={backPreview}
+                    alt="Foto do verso do documento"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-48 border-2 border-dashed border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center text-center bg-white/60">
+                  <p className="text-xs text-slate-500 mb-3 max-w-xs">
+                    Se o papel tiver orientações, carimbos ou código de barras no <strong>verso</strong>, fotografe aqui:
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      onClick={() => cameraBackRef.current?.click()}
+                      disabled={isLoading}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 font-bold text-xs transition-colors"
+                    >
+                      <Camera className="w-3.5 h-3.5" /> Tirar Foto do Verso
+                    </button>
+                    <button
+                      onClick={() => fileBackRef.current?.click()}
+                      disabled={isLoading}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition-colors"
+                    >
+                      <ImageUp className="w-3.5 h-3.5" /> Da Galeria
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Botão de Análise Principal */}
+          <button
+            onClick={handleStartAnalysis}
+            disabled={isLoading}
+            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-lg sm:text-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-3 transition-all active:scale-[0.99] disabled:opacity-50"
+          >
+            <Sparkles className="w-6 h-6 animate-spin-slow" />
+            <span>
+              {backFile
+                ? 'Explicar Documento (Frente e Verso)'
+                : 'Explicar Este Documento Para Mim'}
+            </span>
           </button>
         </div>
       )}

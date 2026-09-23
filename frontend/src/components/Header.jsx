@@ -25,24 +25,26 @@ export default function Header({ onIncreaseFont, onDecreaseFont, fontSizeLevel }
             </div>
           </div>
 
-          {/* Controles de Acessibilidade (Tamanho do Texto) */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 flex-shrink-0">
+          {/* Controles de Acessibilidade (Tamanho do Texto / Zoom Real) */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 flex-shrink-0 shadow-xs">
             <button
               onClick={onDecreaseFont}
               disabled={fontSizeLevel <= 0}
               title="Diminuir tamanho da letra"
               aria-label="Diminuir tamanho da letra"
-              className="px-2.5 py-1.5 text-xs font-bold rounded-lg text-slate-700 hover:bg-white disabled:opacity-40 transition-colors"
+              className="px-3 py-1.5 text-xs font-black rounded-xl text-slate-700 hover:bg-white active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs"
             >
               A-
             </button>
-            <span className="text-xs font-semibold text-slate-400 px-1">Fonte</span>
+            <span className="text-[11px] font-bold text-slate-600 px-2 min-w-[56px] text-center select-none">
+              {fontSizeLevel === 0 ? 'Normal' : fontSizeLevel === 1 ? 'Média' : fontSizeLevel === 2 ? 'Grande' : 'Máxima'}
+            </span>
             <button
               onClick={onIncreaseFont}
-              disabled={fontSizeLevel >= 2}
+              disabled={fontSizeLevel >= 3}
               title="Aumentar tamanho da letra"
               aria-label="Aumentar tamanho da letra"
-              className="px-2.5 py-1.5 text-sm font-bold rounded-lg text-slate-700 hover:bg-white disabled:opacity-40 transition-colors"
+              className="px-3 py-1.5 text-xs font-black rounded-xl text-slate-700 hover:bg-white active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-xs"
             >
               A+
             </button>

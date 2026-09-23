@@ -9,29 +9,48 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0: Normal, 1: Grande, 2: Extra Grande
+  // 0: Normal (100%), 1: Média (115%), 2: Grande (130%), 3: Máxima (145%)
+  const [fontSizeLevel, setFontSizeLevel] = useState(() => {
+    try {
+      const saved = localStorage.getItem('app_font_size_level');
+      return saved !== null ? Math.min(3, Math.max(0, Number(saved))) : 0;
+    } catch {
+      return 0;
+    }
+  });
 
-  const fontClasses = [
-    'text-base',        // 0: Normal
-    'text-lg sm:text-xl', // 1: Grande
-    'text-xl sm:text-2xl' // 2: Extra Grande
-  ];
+  const fontScales = ['100%', '115%', '130%', '145%'];
+
+  // Aplica o zoom real na raiz do documento (afeta todos os textos, botões e cards uniformemente)
+  React.useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.fontSize = fontScales[fontSizeLevel] || '100%';
+      try {
+        localStorage.setItem('app_font_size_level', String(fontSizeLevel));
+      } catch (err) {
+        console.warn('Erro ao salvar preferência de fonte:', err);
+      }
+    }
+  }, [fontSizeLevel]);
 
   const handleIncreaseFont = () => {
-    if (fontSizeLevel < 2) setFontSizeLevel((prev) => prev + 1);
+    if (fontSizeLevel < 3) setFontSizeLevel((prev) => prev + 1);
   };
 
   const handleDecreaseFont = () => {
     if (fontSizeLevel > 0) setFontSizeLevel((prev) => prev - 1);
   };
 
-  const handleAnalyze = async (file) => {
+  const handleAnalyze = async (files) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
 
+    const fileList = Array.isArray(files) ? files : [files];
     const formData = new FormData();
-    formData.append('document', file);
+    fileList.forEach((file) => {
+      formData.append('documents', file);
+    });
 
     try {
       const response = await fetch('/api/analyze-document', {
@@ -140,7 +159,6 @@ export default function App() {
           <ResultCard
             data={result}
             onReset={handleReset}
-            fontSizeClass={fontClasses[fontSizeLevel]}
           />
         )}
       </main>

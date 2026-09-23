@@ -28,8 +28,8 @@ graph TD
     E --> F[Tela limpa com botões grandes e áudio em voz alta nativo]
 ```
 
-1. **Captura Acessível:** O usuário clica em um botão grande de câmera (no celular) ou envia uma foto/imagem do documento.
-2. **Decodificação Inteligente:** O backend se comunica com o SDK oficial da Google GenAI (`gemini-flash-lite-latest`), analisando imagem e texto simultaneamente.
+1. **Captura Acessível:** O usuário fotografa a **Frente e o Verso** do documento (com slots guiados) ou envia um arquivo PDF.
+2. **Decodificação Inteligente:** O backend se comunica com o SDK oficial da Google GenAI (`gemini-flash-lite-latest`), analisando múltiplos lados de imagens e texto simultaneamente.
 3. **Explicação Humanizada:** A IA identifica o tipo de documento e remove qualquer jargão técnico.
 4. **Tópicos de Ação Direta:** Apresenta em destaque:
    - **O que é o documento** (ex: "Conta de Luz da Enel referente a Outubro").
@@ -38,7 +38,8 @@ graph TD
    - **O que você deve fazer** (lista passo a passo numerada).
    - **Alertas Éticos** (ex: receitas médicas reforçam a consulta com o farmacêutico no balcão).
 5. **Acessibilidade por Áudio:** Um botão destacado de **"Ouvir Agora"** aciona a síntese de voz nativa do navegador (`window.speechSynthesis`) em português brasileiro, permitindo ouvir a explicação completa sem custos adicionais.
-6. **Acessibilidade Visual:** Botões **A- / A+** no topo permitem aumentar o tamanho da letra para idosos ou pessoas com baixa visão.
+6. **Acessibilidade Visual (Zoom Real):** Botões **A- / A+** no topo permitem aumentar proporcionalmente todos os textos, botões e cards da aplicação em 4 níveis com persistência local.
+7. **Tira-Dúvidas Interativo com IA:** O cidadão pode tirar dúvidas sobre o documento usando perguntas frequentes de 1 clique, digitando ou falando pelo **Microfone**, com leitura em voz alta da resposta.
 
 ---
 
@@ -71,9 +72,10 @@ projeto-idoso/
 │   ├── .env.example              # Modelo de configuração de variáveis
 │   ├── .env                      # Chave da API Gemini (ignorado pelo git por segurança)
 │   ├── package.json              # Dependências do servidor
-│   ├── server.js                 # Servidor Express e rota POST /api/analyze-document
+│   ├── server.js                 # Servidor Express (/api/analyze-document e /api/ask-question)
 │   ├── prompts/
-│   │   └── documentPrompt.js     # System Prompt empático e Schema estruturado
+│   │   ├── documentPrompt.js     # System Prompt empático e Schema estruturado
+│   │   └── qaPrompt.js           # Prompt do Tira-Dúvidas contextual
 │   └── services/
 │       └── geminiService.js      # Integração multimodal resiliente com o Google GenAI
 │
@@ -85,16 +87,17 @@ projeto-idoso/
 │   ├── index.html                # Ponto de entrada com metatags de acessibilidade
 │   └── src/
 │       ├── main.jsx
-│       ├── App.jsx               # Fluxo principal, preview e estados de tela
+│       ├── App.jsx               # Fluxo principal, zoom real e estados de tela
 │       ├── index.css             # Estilos globais e foco acessível
 │       ├── utils/
 │       │   └── speech.js         # Controlador da Web Speech API nativa (pt-BR)
 │       └── components/
-│           ├── Header.jsx        # Cabeçalho com redimensionador de fonte (A- / A+)
-│           ├── DocumentUploader.jsx # Botões táteis gigantes para Câmera ou Galeria
+│           ├── Header.jsx        # Cabeçalho com indicador dinâmico e zoom (A- / A+)
+│           ├── DocumentUploader.jsx # Captura guiada para Frente e Verso ou PDF
 │           ├── LoadingState.jsx  # Feedback acolhedor ("Lendo seu documento...")
 │           ├── AudioPlayer.jsx   # Reprodutor acessível (Play/Pause/Velocidade)
-│           └── ResultCard.jsx    # Card estruturado (o que é, ações, prazos, ética)
+│           ├── ResultCard.jsx    # Card estruturado (o que é, ações, prazos, ética)
+│           └── DocumentQA.jsx    # Tira-dúvidas com IA, microfone e áudio
 │
 ├── .gitignore                    # Garante que chaves de API e node_modules não sejam commitados
 └── README.md                     # Documentação completa

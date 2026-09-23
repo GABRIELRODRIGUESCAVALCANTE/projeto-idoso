@@ -13,6 +13,7 @@ import {
   Users
 } from 'lucide-react';
 import AudioPlayer from './AudioPlayer';
+import DocumentQA from './DocumentQA';
 
 export default function ResultCard({ data, onReset, fontSizeClass }) {
   if (!data) return null;
@@ -186,6 +187,11 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
             </p>
           </div>
         )}
+
+        {/* 6. TIRA-DÚVIDAS COM IA (Perguntas e Respostas Acessíveis) */}
+        <div className="pt-2">
+          <DocumentQA documentData={data} fontSizeClass={fontSizeClass} />
+        </div>
 
         {/* Botão de Limpar e Ler Outro Documento */}
         <div className="pt-4 border-t border-slate-100">
