@@ -13,7 +13,7 @@ import {
   Layers
 } from 'lucide-react';
 
-export default function DocumentUploader({ onAnalyze, isLoading }) {
+export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onRequestConsent }) {
   // Estados para suportar Frente e Verso ou arquivo PDF único
   const [frontFile, setFrontFile] = useState(null);
   const [frontPreview, setFrontPreview] = useState(null);
@@ -22,6 +22,15 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
   const [backPreview, setBackPreview] = useState(null);
 
   const [pdfFile, setPdfFile] = useState(null);
+
+  // Helper para exigir consentimento prévio antes de abrir a câmera ou seletor de arquivos
+  const handleTriggerAction = (actionFn) => {
+    if (!hasConsent && onRequestConsent) {
+      onRequestConsent(actionFn);
+    } else {
+      actionFn();
+    }
+  };
 
   // Referências para os inputs de câmera e arquivo
   const cameraFrontRef = useRef(null);
@@ -84,6 +93,11 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
 
   const handleStartAnalysis = () => {
     if (isLoading) return;
+
+    if (!hasConsent && onRequestConsent) {
+      onRequestConsent(() => handleStartAnalysis());
+      return;
+    }
 
     if (pdfFile) {
       onAnalyze([pdfFile]);
@@ -164,7 +178,7 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Opção 1: Tirar foto com a câmera */}
             <button
-              onClick={() => cameraFrontRef.current?.click()}
+              onClick={() => handleTriggerAction(() => cameraFrontRef.current?.click())}
               className="flex items-center sm:flex-col justify-center gap-3 p-5 sm:p-7 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white font-bold text-base sm:text-lg shadow-lg shadow-sky-500/25 hover:from-sky-600 hover:to-blue-700 active:scale-[0.98] transition-all"
               aria-label="Abrir câmera do celular para fotografar a frente do documento"
             >
@@ -181,7 +195,7 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
 
             {/* Opção 2: Escolher imagem da Galeria ou PDF */}
             <button
-              onClick={() => fileFrontRef.current?.click()}
+              onClick={() => handleTriggerAction(() => fileFrontRef.current?.click())}
               className="flex items-center sm:flex-col justify-center gap-3 p-5 sm:p-7 rounded-2xl bg-slate-50 border-2 border-slate-300 hover:border-sky-500 text-slate-800 font-bold text-base sm:text-lg hover:bg-sky-50/50 active:scale-[0.98] transition-all"
               aria-label="Escolher foto da galeria ou arquivo PDF"
             >
@@ -217,9 +231,9 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
             <button
               onClick={handleClearAll}
               disabled={isLoading}
-              className="text-xs sm:text-sm text-slate-500 hover:text-rose-600 font-semibold flex items-center gap-1.5 p-1 disabled:opacity-40"
+              className="min-h-[44px] px-3.5 py-2 text-xs sm:text-sm text-slate-700 hover:text-rose-700 font-bold flex items-center gap-1.5 rounded-xl disabled:opacity-40 focus-visible:ring-4 focus-visible:ring-rose-400"
             >
-              <RotateCcw className="w-4 h-4" /> Trocar Arquivo
+              <RotateCcw className="w-4 h-4" /> <span>Trocar Arquivo</span>
             </button>
           </div>
 
@@ -262,9 +276,9 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
             <button
               onClick={handleClearAll}
               disabled={isLoading}
-              className="text-xs sm:text-sm text-slate-500 hover:text-rose-600 font-semibold flex items-center gap-1.5 p-1 disabled:opacity-40"
+              className="min-h-[44px] px-3 py-2 text-xs sm:text-sm text-slate-600 hover:text-rose-700 font-bold flex items-center gap-1.5 rounded-xl disabled:opacity-40 focus-visible:ring-4 focus-visible:ring-rose-400"
             >
-              <RotateCcw className="w-4 h-4" /> Recomeçar
+              <RotateCcw className="w-4 h-4" /> <span>Recomeçar</span>
             </button>
           </div>
 
@@ -278,11 +292,12 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
                   1. Foto da Frente
                 </span>
                 <button
-                  onClick={() => cameraFrontRef.current?.click()}
+                  onClick={() => handleTriggerAction(() => cameraFrontRef.current?.click())}
                   disabled={isLoading}
-                  className="text-xs font-semibold text-sky-600 hover:underline"
+                  className="min-h-[44px] px-3 py-2 text-xs font-bold text-sky-700 hover:text-sky-900 inline-flex items-center gap-1 rounded-xl focus-visible:ring-4 focus-visible:ring-sky-500"
                 >
-                  Tirar outra
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Trocar foto</span>
                 </button>
               </div>
 
@@ -313,9 +328,10 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
                     onClick={handleRemoveBack}
                     disabled={isLoading}
                     title="Remover foto do verso"
-                    className="text-xs font-semibold text-rose-600 hover:underline flex items-center gap-1"
+                    aria-label="Remover foto do verso do documento"
+                    className="min-h-[44px] px-3 py-1.5 text-xs font-bold text-rose-700 hover:text-rose-900 rounded-xl flex items-center gap-1.5 focus-visible:ring-4 focus-visible:ring-rose-400"
                   >
-                    <Trash2 className="w-3.5 h-3.5" /> Remover
+                    <Trash2 className="w-4 h-4" /> <span>Remover</span>
                   </button>
                 )}
               </div>
@@ -335,14 +351,14 @@ export default function DocumentUploader({ onAnalyze, isLoading }) {
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     <button
-                      onClick={() => cameraBackRef.current?.click()}
+                      onClick={() => handleTriggerAction(() => cameraBackRef.current?.click())}
                       disabled={isLoading}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 font-bold text-xs transition-colors"
                     >
                       <Camera className="w-3.5 h-3.5" /> Tirar Foto do Verso
                     </button>
                     <button
-                      onClick={() => fileBackRef.current?.click()}
+                      onClick={() => handleTriggerAction(() => fileBackRef.current?.click())}
                       disabled={isLoading}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition-colors"
                     >

@@ -1,31 +1,97 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import dotenv from 'dotenv';
 import { analyzeDocumentImages, answerDocumentQuestion } from './services/geminiService.js';
+import { detectMimeFromMagicBytes, ALLOWED_MIME_TYPES } from './utils/fileValidation.js';
+import { safeLog } from './utils/logger.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configuração do CORS para permitir requisições do frontend
+// 1. Cabeçalhos de Segurança HTTP com Helmet
 app.use(
-  cors({
-    origin: '*',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false // Desativado para permitir consumo direto da API REST
   })
 );
 
-app.use(express.json());
+// 2. Configuração restrita do CORS (Origens confiáveis do frontend)
+const defaultAllowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://localhost:4173'
+];
 
-// Configuração de upload seguro em memória (Privacidade: dados não são salvos em disco)
+const envOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+  : [];
+
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envOrigins])];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Permite requisições sem origin (como chamadas locais do terminal, curl ou same-origin)
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        safeLog.security(`Bloqueio de CORS para origem não autorizada: ${origin}`);
+        callback(new Error('Origem não permitida pela política de segurança CORS.'));
+      }
+    },
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  })
+);
+
+// 3. Rate Limiters (Proteção contra abuso de requisições e sobrecarga de cota)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 120, // Limite geral de 120 requisições a cada 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Muitas requisições originadas deste endereço de IP. Por favor, aguarde alguns minutos.'
+  }
+});
+app.use('/api/', globalLimiter);
+
+// Limiter estrito para rotas que invocam IA do Gemini (evita abuso e exaustão de cota)
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 30, // 30 chamadas de IA por IP a cada 15 minutos
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Limite de análises com Inteligência Artificial temporariamente atingido. Por favor, aguarde alguns minutos.'
+  }
+});
+
+app.use(express.json({ limit: '1mb' }));
+
+// 4. Configuração de upload seguro em memória (Privacidade: dados NUNCA são salvos em disco)
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 15 * 1024 * 1024 // Limite de 15MB
+    fileSize: 10 * 1024 * 1024, // Limite máximo estrito de 10MB por arquivo
+    files: 4 // Máximo de 4 arquivos (ex: frente e verso de 2 páginas)
   },
   fileFilter: (req, file, cb) => {
     const isImage = file.mimetype.startsWith('image/');
@@ -34,7 +100,7 @@ const upload = multer({
     if (isImage || isPdf) {
       cb(null, true);
     } else {
-      cb(new Error('Formato inválido. Por favor, envie uma foto (JPG, PNG) ou arquivo PDF do documento.'));
+      cb(new Error('Formato inválido. Por favor, envie uma foto (JPG, PNG, WEBP) ou arquivo PDF do documento.'));
     }
   }
 });
@@ -45,21 +111,23 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     service: 'Tradutor de Burocracia & Saúde API',
-    model: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
-    geminiKeyConfigured: hasKey
+    model: process.env.GEMINI_MODEL || 'gemini-flash-lite-latest',
+    geminiKeyConfigured: hasKey,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Endpoint principal: Análise Multimodal de Documentos (suporta frente e verso ou página única)
+// Endpoint principal: Análise Multimodal de Documentos com Validação de Magic Bytes
 app.post(
   '/api/analyze-document',
+  aiLimiter,
   upload.fields([
     { name: 'documents', maxCount: 4 },
     { name: 'document', maxCount: 1 }
   ]),
   async (req, res) => {
     try {
-      // Coleta todos os arquivos enviados (retrocompatível com 'document' único e 'documents' array)
+      // Coleta todos os arquivos enviados
       const rawFiles = [];
       if (req.files) {
         if (Array.isArray(req.files)) {
@@ -79,61 +147,77 @@ app.post(
         });
       }
 
-      // Validação estrita de assinatura de bytes para CADA arquivo enviado
+      // Validação estrita por MAGIC BYTES reais de cada arquivo enviado
       const validFiles = [];
+      let totalBytes = 0;
 
       for (const file of rawFiles) {
-        const buf = file.buffer;
-        const isJpeg = buf.length >= 3 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF;
-        const isPng = buf.length >= 4 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47;
-        const isPdf = buf.length >= 4 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46; // %PDF
-        const isWebp = buf.length >= 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP';
+        const detectedMime = detectMimeFromMagicBytes(file.buffer);
 
-        if (!isJpeg && !isPng && !isPdf && !isWebp) {
-          console.warn(`[SEGURANÇA] Arquivo rejeitado por assinatura inválida: ${file.originalname}`);
+        if (!detectedMime || !ALLOWED_MIME_TYPES.includes(detectedMime)) {
+          safeLog.security(
+            `Arquivo rejeitado por assinatura inválida de magic bytes: ${safeLog.sanitizeFilename(file.originalname)}`
+          );
           return res.status(400).json({
             success: false,
-            error: `O arquivo "${file.originalname}" possui assinatura inválida. Apenas fotos (JPG, PNG, WEBP) e documentos PDF autênticos são aceitos.`
+            error: `O arquivo enviado possui assinatura binária inválida. Apenas fotos (JPG, PNG, WEBP) e documentos PDF autênticos são aceitos.`
           });
         }
 
-        const mimeType = (file.mimetype === 'application/x-pdf' || file.originalname.toLowerCase().endsWith('.pdf'))
-          ? 'application/pdf'
-          : file.mimetype;
-
+        totalBytes += file.size;
         validFiles.push({
           buffer: file.buffer,
-          mimeType,
-          originalname: file.originalname,
+          mimeType: detectedMime, // Substitui pelo MIME real verificado por bytes (evita MIME spoofing)
+          originalname: safeLog.sanitizeFilename(file.originalname),
           size: file.size
         });
       }
 
-      console.log(`[LOG] Recebido(s) ${validFiles.length} arquivo(s) para análise: ${validFiles.map(f => `${f.originalname} (${(f.size / 1024).toFixed(1)} KB)`).join(', ')}`);
+      // LGPD: Log sanitizado sem expor nomes de pessoas ou conteúdos de documentos
+      safeLog.info(
+        `Recebido(s) ${validFiles.length} arquivo(s) para análise [${(totalBytes / 1024).toFixed(1)} KB total]`
+      );
 
       const analysis = await analyzeDocumentImages({
         files: validFiles
       });
 
-      console.log(`[LOG] Análise de ${validFiles.length} página(s) concluída com sucesso: "${analysis.tipoDocumento}"`);
+      // LGPD: Registra apenas o tipo genérico de documento processado
+      safeLog.info(
+        `Análise concluída com sucesso para categoria: "${analysis.categoria || 'Geral'}"`
+      );
 
       return res.status(200).json({
         success: true,
         data: analysis
       });
     } catch (error) {
-    console.error('[ERRO] Falha ao analisar documento:', error.message);
+      safeLog.error('Falha ao analisar documento', error.message);
 
-    const isApiKeyError = error.message.includes('GEMINI_API_KEY');
-    return res.status(isApiKeyError ? 401 : 500).json({
-      success: false,
-      error: error.message || 'Ocorreu um erro ao processar o seu documento. Tente novamente.'
-    });
+      const isApiKeyError = error.message && error.message.includes('GEMINI_API_KEY');
+      let friendlyError = error.message || 'Ocorreu um erro ao processar o seu documento. Tente novamente.';
+      if (friendlyError.startsWith('{') && friendlyError.includes('"message"')) {
+        try {
+          const parsed = JSON.parse(friendlyError);
+          friendlyError = parsed.error?.message || friendlyError;
+        } catch (_) {}
+      }
+      if (friendlyError.includes('INTERNAL') || friendlyError.includes('Internal error')) {
+        friendlyError = 'Os servidores da IA tiveram uma instabilidade momentânea. Por favor, tente enviar novamente em instantes.';
+      }
+
+      return res.status(isApiKeyError ? 401 : 500).json({
+        success: false,
+        error: isApiKeyError
+          ? 'Chave de API do Gemini não configurada no servidor.'
+          : friendlyError
+      });
+    }
   }
-});
+);
 
 // Endpoint secundário: Tira-Dúvidas com IA sobre o Documento
-app.post('/api/ask-question', async (req, res) => {
+app.post('/api/ask-question', aiLimiter, async (req, res) => {
   try {
     const { documentData, question, history } = req.body;
 
@@ -151,7 +235,10 @@ app.post('/api/ask-question', async (req, res) => {
       });
     }
 
-    console.log(`[LOG] Recebida dúvida sobre "${documentData.tipoDocumento || 'documento'}": "${question.slice(0, 80)}"`);
+    // LGPD: NUNCA logar o texto da pergunta em produção (pode conter dados médicos ou judiciais sensíveis)
+    safeLog.info(
+      `Dúvida recebida para documento (${documentData.categoria || 'Geral'}) [tamanho da pergunta: ${question.trim().length} chars]`
+    );
 
     const answer = await answerDocumentQuestion({
       documentData,
@@ -159,7 +246,7 @@ app.post('/api/ask-question', async (req, res) => {
       history: Array.isArray(history) ? history : []
     });
 
-    console.log(`[LOG] Dúvida respondida com sucesso!`);
+    safeLog.info('Dúvida respondida com sucesso pela IA');
 
     return res.status(200).json({
       success: true,
@@ -169,23 +256,41 @@ app.post('/api/ask-question', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[ERRO] Falha ao responder dúvida:', error.message);
-    const isApiKeyError = error.message.includes('GEMINI_API_KEY');
+    safeLog.error('Falha ao responder dúvida', error.message);
+    const isApiKeyError = error.message && error.message.includes('GEMINI_API_KEY');
+    let friendlyError = error.message || 'Não foi possível responder sua dúvida no momento. Tente novamente.';
+    if (friendlyError.startsWith('{') && friendlyError.includes('"message"')) {
+      try {
+        const parsed = JSON.parse(friendlyError);
+        friendlyError = parsed.error?.message || friendlyError;
+      } catch (_) {}
+    }
+    if (friendlyError.includes('INTERNAL') || friendlyError.includes('Internal error')) {
+      friendlyError = 'Os servidores da IA tiveram uma instabilidade momentânea. Por favor, tente enviar sua pergunta novamente.';
+    }
+
     return res.status(isApiKeyError ? 401 : 500).json({
       success: false,
-      error: error.message || 'Não foi possível responder sua dúvida no momento. Tente novamente.'
+      error: isApiKeyError
+        ? 'Chave de API do Gemini não configurada no servidor.'
+        : friendlyError
     });
   }
 });
 
-
-// Tratamento de erros do multer e gerais
+// Tratamento de erros do multer e middlewares
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
-        error: 'A imagem é muito grande. O limite máximo permitido é 10MB.'
+        error: 'O arquivo é muito grande. O limite máximo permitido por arquivo é de 10MB.'
+      });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        success: false,
+        error: 'Número máximo de páginas/arquivos excedido (máximo de 4).'
       });
     }
     return res.status(400).json({ success: false, error: err.message });
@@ -198,6 +303,8 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(`🚀 Servidor Tradutor de Burocracia rodando na porta ${PORT}`);
+  console.log(`🛡️  Segurança: Helmet, Rate-Limit, CORS e Magic-Bytes ativados`);
+  console.log(`🔒 LGPD: Armazenamento exclusivo em memória RAM (sem disco)`);
   console.log(`🔗 Health Check: http://localhost:${PORT}/api/health`);
   console.log(`====================================================`);
 });

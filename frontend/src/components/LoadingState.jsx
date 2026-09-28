@@ -3,7 +3,12 @@ import { Eye, Sparkles } from 'lucide-react';
 
 export default function LoadingState() {
   return (
-    <div className="bg-white rounded-3xl border border-sky-100 shadow-md p-8 sm:p-12 text-center my-6">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className="bg-white rounded-3xl border border-sky-100 shadow-md p-8 sm:p-12 text-center my-6"
+    >
       <div className="relative w-20 h-20 mx-auto mb-6">
         {/* Anéis de pulso de carregamento */}
         <div className="absolute inset-0 rounded-full bg-sky-400/20 animate-ping" />

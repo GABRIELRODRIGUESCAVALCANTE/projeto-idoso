@@ -309,42 +309,50 @@ export default function DocumentQA({ documentData, fontSizeClass = '' }) {
           />
         </div>
 
-        {/* Botão de Falar (Microfone) */}
+        {/* Botão de Falar (Microfone com Ícone + Texto) */}
         {speechSupported && (
           <button
             type="button"
             onClick={handleToggleListening}
             disabled={isLoading}
             title={isListening ? 'Parar gravação' : 'Falar dúvida pelo microfone'}
-            className={`p-3.5 sm:p-4 rounded-2xl font-bold flex items-center justify-center transition-all shadow-sm active:scale-95 flex-shrink-0 ${
+            aria-label={isListening ? 'Parar gravação de voz' : 'Falar dúvida pelo microfone do aparelho'}
+            className={`min-h-[44px] px-3.5 sm:px-4 py-3 rounded-2xl font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 flex-shrink-0 focus-visible:ring-4 focus-visible:ring-sky-500 ${
               isListening
-                ? 'bg-rose-500 hover:bg-rose-600 text-white animate-bounce'
-                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-700'
+                ? 'bg-rose-500 hover:bg-rose-600 text-white animate-pulse'
+                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-800'
             }`}
           >
             {isListening ? (
-              <MicOff className="w-5 h-5 sm:w-6 sm:h-6" />
+              <>
+                <MicOff className="w-5 h-5 text-white" />
+                <span className="text-xs font-bold">Ouvindo...</span>
+              </>
             ) : (
-              <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-sky-600" />
+              <>
+                <Mic className="w-5 h-5 text-sky-600" />
+                <span className="text-xs font-bold">Falar</span>
+              </>
             )}
           </button>
         )}
 
-        {/* Botão Enviar Pergunta */}
+        {/* Botão Enviar Pergunta (Ícone + Texto sempre visíveis) */}
         <button
           type="submit"
           disabled={isLoading || !questionInput.trim()}
-          className="px-5 sm:px-6 py-3.5 sm:py-4 rounded-2xl bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-md shadow-sky-600/20 active:scale-95 transition-all flex-shrink-0"
+          aria-label="Enviar dúvida para o assistente de IA"
+          className="min-h-[44px] px-4 sm:px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold text-xs sm:text-base flex items-center justify-center gap-2 shadow-md shadow-sky-600/20 active:scale-95 transition-all flex-shrink-0 focus-visible:ring-4 focus-visible:ring-sky-500"
         >
           {isLoading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="hidden sm:inline">Pensando...</span>
+              <span>Pensando...</span>
             </>
           ) : (
             <>
               <Send className="w-5 h-5" />
-              <span className="hidden sm:inline">Perguntar</span>
+              <span>Perguntar</span>
             </>
           )}
         </button>

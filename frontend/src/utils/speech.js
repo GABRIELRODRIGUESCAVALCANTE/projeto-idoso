@@ -1,5 +1,7 @@
 /**
- * Wrapper de Acessibilidade para a Web Speech API nativa do navegador
+ * Controlador de Síntese de Fala com suporte avançado a acessibilidade (WCAG 2.2 AA).
+ * Inclui detecção de vozes pt-BR, evento boundary para acompanhamento por trecho (karaokê)
+ * e tratamento para dispositivos sem suporte ou sem vozes locais em português.
  */
 class SpeechController {
   constructor() {
@@ -27,14 +29,25 @@ class SpeechController {
     if (!this.voices.length && this.synth) {
       this.voices = this.synth.getVoices();
     }
-    // Procura por vozes brasileiras naturais ou padrão
+    // Procura por vozes brasileiras (pt-BR ou pt)
     const ptBrVoices = this.voices.filter(v => v.lang === 'pt-BR' || v.lang.startsWith('pt'));
-    // Prioriza vozes do Google ou Microsoft se disponíveis
-    const preferred = ptBrVoices.find(v => v.name.includes('Google') || v.name.includes('Luciana') || v.name.includes('Natural'));
+    // Prioriza vozes com maior naturalidade (Google, Luciana, Microsoft, Maria)
+    const preferred = ptBrVoices.find(v => 
+      v.name.includes('Google') || 
+      v.name.includes('Luciana') || 
+      v.name.includes('Natural') || 
+      v.name.includes('Maria')
+    );
     return preferred || ptBrVoices[0] || null;
   }
 
-  speak(text, { rate = 0.95, pitch = 1.0, onStart, onEnd, onError } = {}) {
+  hasPtBrVoice() {
+    if (!this.synth) return false;
+    const voices = this.synth.getVoices();
+    return voices.some(v => v.lang === 'pt-BR' || v.lang.startsWith('pt'));
+  }
+
+  speak(text, { rate = 0.95, pitch = 1.0, onStart, onEnd, onError, onBoundary } = {}) {
     if (!this.isSupported()) {
       console.warn('Web Speech API não é suportada neste navegador.');
       return false;
@@ -44,7 +57,7 @@ class SpeechController {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
-    utterance.rate = rate; // Um pouco mais compassado para facilitar a compreensão
+    utterance.rate = rate; // Ritmo compassado para melhor compreensão por idosos
     utterance.pitch = pitch;
 
     const voice = this.getPtBrVoice();
@@ -53,7 +66,7 @@ class SpeechController {
     }
 
     utterance.onstart = () => {
-      if (onStart) onStart();
+      if (onStart) onStart({ hasPtVoice: Boolean(voice) });
     };
 
     utterance.onend = () => {
@@ -66,6 +79,17 @@ class SpeechController {
       this.currentUtterance = null;
       if (onError) onError(e);
     };
+
+    // Suporte ao evento boundary para realce dinâmico do trecho/palavra lida (karaokê acessível)
+    if (onBoundary) {
+      utterance.onboundary = (event) => {
+        onBoundary({
+          charIndex: event.charIndex,
+          charLength: event.charLength || 0,
+          name: event.name
+        });
+      };
+    }
 
     this.currentUtterance = utterance;
     this.synth.speak(utterance);

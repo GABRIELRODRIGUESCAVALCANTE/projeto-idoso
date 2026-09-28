@@ -5,23 +5,108 @@
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    color: #1e293b;
+    color: #0f172a;
     background-color: #f8fafc;
+    min-height: 100vh;
   }
 }
 
-/* Animações suaves para acessibilidade e feedback */
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.02); }
+/* ========================================================
+   ACESSIBILIDADE: FOCO VISÍVEL REFORÇADO (WCAG 2.2 AA)
+   ======================================================== */
+*:focus-visible {
+  outline: 3px solid #0284c7 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 2px #ffffff !important;
 }
 
-.animate-pulse-subtle {
-  animation: pulse-subtle 3s ease-in-out infinite;
+/* ========================================================
+   ACESSIBILIDADE: RESPEITO A PREFERS-REDUCED-MOTION
+   ======================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-bounce,
+  .animate-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
 }
 
-/* Touch targets acessíveis e legibilidade para idosos */
-.accessible-focus:focus-visible {
-  outline: 3px solid #0284c7;
-  outline-offset: 3px;
+/* ========================================================
+   MODO ALTO CONTRASTE (WCAG AAA - CONTRASTE > 7:1)
+   ======================================================== */
+.high-contrast {
+  color-scheme: dark;
+}
+
+.high-contrast body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.high-contrast header,
+.high-contrast footer,
+.high-contrast main,
+.high-contrast section,
+.high-contrast div[role="dialog"] > div,
+.high-contrast .bg-white,
+.high-contrast .bg-slate-50,
+.high-contrast .bg-sky-50,
+.high-contrast .bg-amber-50,
+.high-contrast .bg-rose-50,
+.high-contrast .bg-emerald-50 {
+  background-color: #0d0d0d !important;
+  color: #ffffff !important;
+  border-color: #ffff00 !important; /* Amarelo puro de alto contraste */
+}
+
+.high-contrast h1,
+.high-contrast h2,
+.high-contrast h3,
+.high-contrast h4,
+.high-contrast p,
+.high-contrast span,
+.high-contrast label,
+.high-contrast li {
+  color: #ffffff !important;
+}
+
+.high-contrast .text-slate-500,
+.high-contrast .text-slate-600,
+.high-contrast .text-slate-700,
+.high-contrast .text-sky-700,
+.high-contrast .text-amber-800,
+.high-contrast .text-rose-700 {
+  color: #ffff00 !important;
+}
+
+.high-contrast button {
+  border: 2px solid #ffff00 !important;
+}
+
+.high-contrast input[type="text"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffff00 !important;
+}
+
+.high-contrast input[type="text"]::placeholder {
+  color: #a3a3a3 !important;
+}
+
+/* ========================================================
+   TOUCH TARGETS ACESSÍVEIS (WCAG 2.5.8 / MÍNIMO 44x44px)
+   ======================================================== */
+button,
+a,
+input[type="button"],
+input[type="submit"] {
+  min-height: 44px;
 }

@@ -29,16 +29,16 @@ graph TD
 ```
 
 1. **Captura Acessível:** O usuário fotografa a **Frente e o Verso** do documento (com slots guiados) ou envia um arquivo PDF.
-2. **Decodificação Inteligente:** O backend se comunica com o SDK oficial da Google GenAI (`gemini-flash-lite-latest`), analisando múltiplos lados de imagens e texto simultaneamente.
-3. **Explicação Humanizada:** A IA identifica o tipo de documento e remove qualquer jargão técnico.
+2. **Decodificação Inteligente:** O backend se comunica com o SDK oficial da Google GenAI utilizando o modelo multimodal **`gemma-4-26b-a4b-it`** (com cadeia de fallback resiliente para `gemini-3.6-flash`, `gemini-3.1-flash-lite` e `gemini-3.8-flash`), analisando múltiplos lados de imagens e texto simultaneamente.
+3. **Explicação Humanizada (~5º Ano):** A IA identifica o tipo de documento e remove qualquer jargão técnico, gerando explicações em frases curtas (máx. 15-18 palavras) e voz ativa direta.
 4. **Tópicos de Ação Direta:** Apresenta em destaque:
    - **O que é o documento** (ex: "Conta de Luz da Enel referente a Outubro").
    - **O que este papel diz** (resumo em 2 ou 3 frases simples).
    - **Valores e Prazos** (quanto pagar e até quando).
    - **O que você deve fazer** (lista passo a passo numerada).
    - **Alertas Éticos** (ex: receitas médicas reforçam a consulta com o farmacêutico no balcão).
-5. **Acessibilidade por Áudio:** Um botão destacado de **"Ouvir Agora"** aciona a síntese de voz nativa do navegador (`window.speechSynthesis`) em português brasileiro, permitindo ouvir a explicação completa sem custos adicionais.
-6. **Acessibilidade Visual (Zoom Real):** Botões **A- / A+** no topo permitem aumentar proporcionalmente todos os textos, botões e cards da aplicação em 4 níveis com persistência local.
+5. **Acessibilidade por Áudio com Karaokê:** O botão **"Ouvir Agora"** aciona a síntese de voz nativa (`window.speechSynthesis`) com **destaque visual em tempo real da frase lida** (efeito karaokê via evento `boundary`), permitindo acompanhar a leitura com facilidade.
+6. **Acessibilidade Visual (Zoom Real & Alto Contraste):** Botões **A- / A+** no topo permitem aumentar proporcionalmente todos os textos e cards da aplicação em 4 níveis. Inclui botão de **Modo Alto Contraste** (fundo preto e tipografia amarela de alto contraste).
 7. **Tira-Dúvidas Interativo com IA:** O cidadão pode tirar dúvidas sobre o documento usando perguntas frequentes de 1 clique, digitando ou falando pelo **Microfone**, com leitura em voz alta da resposta.
 
 ---
@@ -49,8 +49,11 @@ graph TD
 Construído em **Node.js** com os seguintes pacotes:
 - **`@google/genai`**: SDK oficial do Google para comunicação multimodal com o Gemini.
 - **`express`**: Framework web para criação dos endpoints HTTP.
-- **`multer`**: Gerencia uploads diretamente em **memória RAM** (garantindo privacidade e conformidade com a LGPD).
-- **`cors`**: Liberação segura de requisições entre origens diferentes.
+- **`zod`**: Validação estrita de schemas tipados para impedir payloads corrompidos ou alucinações.
+- **`multer`**: Gerencia uploads exclusivamente em **memória RAM** (descarte imediato pós-análise).
+- **`helmet`**: Cabeçalhos HTTP de segurança para mitigação de vulnerabilidades comuns da web.
+- **`express-rate-limit`**: Proteção contra abusos, ataques de força bruta e exaustão de cota de IA.
+- **`cors`**: Liberação restrita às origens confiáveis do frontend.
 - **`dotenv`**: Carregamento seguro de variáveis de ambiente.
 
 ### Frontend (Aplicação Web)
@@ -69,15 +72,23 @@ Construído em **React** com **Vite** e **Tailwind CSS**:
 ```
 projeto-idoso/
 ├── backend/
-│   ├── .env.example              # Modelo de configuração de variáveis
+│   ├── .env.example              # Modelo de configuração (modelo ativo gemma-4-26b-a4b-it)
 │   ├── .env                      # Chave da API Gemini (ignorado pelo git por segurança)
-│   ├── package.json              # Dependências do servidor
-│   ├── server.js                 # Servidor Express (/api/analyze-document e /api/ask-question)
+│   ├── package.json              # Dependências e script de benchmark (npm run test:eval)
+│   ├── server.js                 # Servidor Express com Helmet, Rate-Limit, CORS e Magic-Bytes
+│   ├── eval/
+│   │   ├── dataset.js            # Conjunto de benchmark com 26 documentos de teste
+│   │   └── runEval.js            # Runner de avaliação de acurácia, schemas e segurança
+│   ├── schemas/
+│   │   └── documentSchema.js     # Schema Zod para validação estrita da resposta da IA
 │   ├── prompts/
-│   │   ├── documentPrompt.js     # System Prompt empático e Schema estruturado
+│   │   ├── documentPrompt.js     # System Prompt e Schema estruturado do Gemini
 │   │   └── qaPrompt.js           # Prompt do Tira-Dúvidas contextual
-│   └── services/
-│       └── geminiService.js      # Integração multimodal resiliente com o Google GenAI
+│   ├── services/
+│   │   └── geminiService.js      # Integração multimodal com modelos resilientes e retry
+│   └── utils/
+│       ├── fileValidation.js     # Validação de tipos MIME por Magic Bytes
+│       └── logger.js             # Logger sanitizado compatível com LGPD
 │
 ├── frontend/
 │   ├── package.json              # Dependências da interface
@@ -90,12 +101,14 @@ projeto-idoso/
 │       ├── App.jsx               # Fluxo principal, zoom real e estados de tela
 │       ├── index.css             # Estilos globais e foco acessível
 │       ├── utils/
-│       │   └── speech.js         # Controlador da Web Speech API nativa (pt-BR)
+│       │   └── speech.js         # Controlador da Web Speech API nativa (pt-BR com boundary/karaokê)
 │       └── components/
-│           ├── Header.jsx        # Cabeçalho com indicador dinâmico e zoom (A- / A+)
+│           ├── Header.jsx        # Cabeçalho com zoom (A- / A+) e Alto Contraste
+│           ├── ConsentModal.jsx  # Consentimento explícito LGPD prévio ao primeiro upload
+│           ├── ProfessionalDisclaimer.jsx # Aviso explícito de isenção de responsabilidade profissional
 │           ├── DocumentUploader.jsx # Captura guiada para Frente e Verso ou PDF
 │           ├── LoadingState.jsx  # Feedback acolhedor ("Lendo seu documento...")
-│           ├── AudioPlayer.jsx   # Reprodutor acessível (Play/Pause/Velocidade)
+│           ├── AudioPlayer.jsx   # Reprodutor acessível (Play/Pause/Velocidade/Karaokê)
 │           ├── ResultCard.jsx    # Card estruturado (o que é, ações, prazos, ética)
 │           └── DocumentQA.jsx    # Tira-dúvidas com IA, microfone e áudio
 │
@@ -145,7 +158,7 @@ cd projeto-idoso
    - Insira sua chave de API:
    ```env
    PORT=3001
-   GEMINI_MODEL=gemini-flash-lite-latest
+   GEMINI_MODEL=gemma-4-26b-a4b-it
    GEMINI_API_KEY=sua_chave_do_gemini_aqui
    ```
 4. Inicie o servidor:
@@ -201,11 +214,97 @@ Você pode resolver de duas formas:
 
 ---
 
-## 🔒 Segurança e Privacidade por Padrão (LGPD)
+## 🔒 Segurança, Privacidade e LGPD (Lei Geral de Proteção de Dados)
 
-- **Armazenamento em Memória (Sem disco):** O backend utiliza `multer.memoryStorage()`. As fotos de documentos enviados pelo cidadão são processadas diretamente na memória volátil (RAM) e descartadas imediatamente após a resposta da IA.
-- **Chaves de API Protegidas:** O arquivo `.gitignore` previne rigorosamente o envio acidental de arquivos `.env` para repositórios públicos.
-- **Responsabilidade Ética:** A aplicação inclui avisos explícitos para que o cidadão confirme receitas médicas com farmacêuticos ou ordens judiciais com a Defensoria Pública.
+Como a aplicação processa documentos do cotidiano que frequentemente contêm **dados de saúde** (receitas médicas, laudos, exames) e **documentos judiciais/oficiais** (intimações, citações, notificações), estes são classificados como **dados pessoais sensíveis** pela LGPD (**Lei Federal nº 13.709/2018, Art. 5º, II**).
+
+Por isso, o projeto implementa uma arquitetura orientada à privacidade por design (*privacy by design*) com total transparência para o cidadão:
+
+### 1. O que acontece no Servidor Local da Aplicação?
+- **Processamento Exclusivo em Memória RAM:** O backend utiliza `multer.memoryStorage()`. As imagens e arquivos PDF recebidos são mantidos estritamente na memória volátil durante a requisição e são descartados imediatamente após a geração da resposta.
+- **Zero Persistência em Disco:** O servidor não salva arquivos de imagem no sistema operacional e não possui banco de dados com fotos ou dados de cidadãos.
+- **Logs Sanitizados e Seguros:** Nomes de arquivos pessoais, conteúdos extraídos de documentos (OCR), perguntas de cidadãos e respostas da IA **nunca** são registrados em logs de produção, prevenindo vazamentos acidentais de diagnósticos ou informações processuais.
+
+### 2. Para onde vão os dados? (Envio para a IA de Terceiros - Google Gemini)
+Para realizar a leitura de caligrafias difíceis e a tradução de termos técnicos, a imagem/PDF é convertida em Base64 e enviada via conexão criptografada (HTTPS) para a API do **Google Gemini**.
+
+> [!WARNING]  
+> **Diferença Crítica entre o Plano Gratuito (Free Tier) e o Plano Pago do Google Gemini:**
+> - **No Free Tier (Google AI Studio gratuito):** De acordo com os [Termos de Serviço Adicionais do Google AI Studio](https://ai.google.dev/terms), o Google **pode armazenar e utilizar as entradas (prompts, fotos enviadas) e respostas geradas para treinar, aprimorar e refinar seus modelos e produtos de IA**, inclusive com amostragem revisada por humanos com anonimização prévia. **Para documentos contendo dados de saúde e judiciais sensíveis, isso representa um ponto de atenção real de privacidade.**
+> - **No Plano Pago / Corporativo (Google Cloud Vertex AI ou Pay-As-You-Go com Faturamento):** Os dados do cliente **NÃO são utilizados para treinar modelos do Google** e não são retidos além do processamento operacional estritamente contratado.
+> - **Recomendação para Produção/Órgãos Públicos:** Em implantações reais e governamentais que atendam cidadãos, é mandatória a utilização de chaves vinculadas ao plano corporativo com faturamento ativo do Google Cloud ou modelos locais/privados em nuvem soberana.
+
+### 3. Consentimento Explícito do Cidadão (Art. 7º e Art. 11 da LGPD)
+- **Modal Prévio ao Upload:** A interface web exibe uma tela explicativa em linguagem simples e acolhedora antes do primeiro envio de qualquer documento.
+- **Escolha Informada:** O cidadão é informado com clareza de que o documento será lido por uma Inteligência Artificial externa e tem a opção de consentir explicitamente ou utilizar o recurso de **"Ver Exemplo Pronto"** para conhecer a ferramenta sem precisar enviar nenhum documento pessoal real.
+
+### 4. Proteções Técnicas Adicionais da API Backend
+- **Proteção contra Abuso (Rate Limiting):** Implementação de limites de requisições por IP com `express-rate-limit` (limite geral de 120 req/15 min e limite restrito de 30 req/15 min para rotas que consom a IA), evitando exaustão de cotas e ataques de negação de serviço (DoS).
+- **Cabeçalhos de Segurança HTTP (`helmet`):** Inclusão de proteção contra ataques clássicos de web (clickjacking, MIME-sniffing, etc.).
+- **Validação Rigorosa de Tipos MIME por Magic Bytes:** Não confia apenas na extensão (`.jpg`, `.pdf`) ou no cabeçalho `Content-Type` enviado pelo cliente. O backend inspeciona a assinatura binária real (hexadecimal) nos primeiros bytes de cada arquivo em memória (`FF D8 FF` para JPEG, `%PDF` para PDF, `89 50 4E 47` para PNG e `RIFF/WEBP` para WebP), bloqueando tentativas de envio de executáveis ou arquivos forjados.
+- **CORS Restrito:** Acesso restrito aos domínios autorizados do frontend (configurável via variável `CORS_ORIGIN`), bloqueando chamadas abusivas a partir de páginas terceiras não autorizadas.
+- **Limite Estrito de Tamanho:** Upload limitado a 10MB por arquivo e máximo de 4 páginas por requisição.
+
+### 5. Isenção de Responsabilidade Profissional
+- A aplicação deixa explícito na interface (tanto na tela inicial quanto nos resultados) que o sistema é uma **ferramenta de apoio educacional e de acessibilidade e NÃO substitui a orientação de profissionais qualificados** (médicos, farmacêuticos, advogados, defensores públicos ou atendentes oficiais de concessionárias de serviços públicos).
+
+---
+
+## 🧪 Mitigação de Riscos Críticos e Suíte de Avaliação (Benchmark)
+
+O maior risco ao aplicar IA em dados de cidadãos vulneráveis é a ocorrência de **alucinações em pontos críticos**, como **dosagem de medicamentos, valores a pagar e prazos judiciais**. Para blindar o sistema contra esses riscos, foram adotadas as seguintes defesas arquiteturais:
+
+### 1. Structured Output Nativo do Gemini
+Em vez de depender de instruções livres em linguagem natural pedindo JSON, a aplicação utiliza os parâmetros oficiais do SDK do Google GenAI:
+- `responseMimeType: "application/json"`
+- `responseSchema: DOCUMENT_RESPONSE_SCHEMA` (OpenAPI Spec nativo)
+
+Isso força a camada de inferência do modelo a seguir estritamente o grafo tipado, reduzindo drasticamente erros de sintaxe ou omissões de campos.
+
+### 2. Validação Rigorosa de Payload com Zod e Retry Automático
+Mesmo com structured outputs, o backend submete a resposta a um validador de schema com **Zod** (`documentSchema.safeParse`):
+- Se o JSON for malformado ou violar tipos e restrições mínimas, o backend descarta a resposta e aciona um **retry automático com o próximo modelo estável da lista resiliente**.
+
+### 3. Tratamento de Documentos Ilegíveis (`confianca: "baixa"`)
+O schema exige que a IA avalie a nitidez da imagem em `confianca` (`alta`, `media` ou `baixa`).
+- Se a foto estiver borrada, escura ou cortada, o frontend exibe em destaque um alerta preventivo:  
+  *"⚠️ Não consegui ler bem algumas partes deste papel. Para evitar erros graves com valores, remédios ou prazos, recomendamos tirar outra foto com mais iluminação."*
+
+### 4. Tratamento de Imagens Fora do Escopo (`categoria: "FORA_DE_ESCOPO"`)
+Se o usuário enviar selfies, memes, animais, paisagens ou documentos estrangeiros desconexos, a IA classifica como fora de escopo e a interface exibe uma orientação amigável e acolhedora em vez de quebrar ou alucinar uma conta pública inexistente.
+
+### 5. Regra Ultraconservadora para Receitas Médicas
+- A IA é categoricamente proibida de "adivinhar" nomes de medicamentos ou dosagens rasuradas/ilegíveis.
+- O sistema transcreve estritamente o que foi identificado com 100% de clareza e registra explicitamente *"Trecho ilegível no papel — confirme obrigatoriamente com o médico ou farmacêutico"* caso haja qualquer incerteza.
+
+### 6. Destaque Visual com Aviso de Conferência
+Valores monetários e prazos de vencimento são apresentados acompanhados de um banner de checagem obrigatório para o cidadão validar com seus próprios olhos:  
+*"⚠️ Confira sempre no papel original: R$ 142,50 até 25/10/2024"*.
+
+### 7. Modelo Ativo e Arquitetura Resiliente de Fallback
+Para evitar os picos de sobrecarga global (HTTP 503) e as cotas estritas de 20 requisições/dia dos modelos experimentais do Free Tier, o projeto adota o modelo multimodal **`gemma-4-26b-a4b-it`** como padrão ativo, configurável via variável `GEMINI_MODEL`.
+- O backend implementa uma **cadeia automática de fallback** (`gemma-4-26b-a4b-it` → `gemini-3.6-flash` → `gemini-3.1-flash-lite` → `gemini-3.8-flash`).
+- Qualquer oscilação transitória do Google (500 INTERNAL, 502, 503 UNAVAILABLE ou 429 RESOURCE_EXHAUSTED) aciona imediatamente o próximo modelo resiliente sem quebrar a requisição do cidadão.
+
+### 8. Conjunto de Avaliação Contínua (26 Casos de Teste)
+Criada uma suíte automatizada de testes (`eval/dataset.js` e `eval/runEval.js`) contendo **26 documentos sintéticos e anonimizados** (contas públicas, receitas legíveis, receitas ilegíveis/rasuradas, notificações judiciais, benefícios sociais e memes fora de escopo).
+
+Para rodar a avaliação antes de qualquer mudança de prompt ou modelo:
+```bash
+cd backend
+npm.cmd run test:eval -- --offline
+```
+*(Ou `npm run test:eval` para testar ao vivo contra a API do Google).*
+
+### 9. Acessibilidade Universal e Conformidade WCAG 2.2 Nível AA
+A interface web foi desenhada sob as diretrizes de acessibilidade internacional **WCAG 2.2 Nível AA**, garantindo inclusão digital para idosos e pessoas com deficiência ou baixo letramento:
+- **Destaque Dinâmico de Leitura (Efeito Karaokê):** O reprodutor de áudio sincroniza a leitura por voz (`speechSynthesis`) com o texto na tela via eventos `boundary`, destacando visualmente a frase exata que está sendo lida.
+- **Modo Alto Contraste:** Botão dedicado no cabeçalho ativa instantaneamente o tema de alto contraste (fundo preto e tipografia amarela brilhante).
+- **Alvos de Toque Mínimos de 44x44px:** Todos os botões, opções de velocidade e cards respeitam a diretriz WCAG 2.5.8 de tamanho mínimo para evitar toques acidentais em telas sensíveis ao toque.
+- **Rótulos Duplos (Ícone + Texto):** Todos os botões principais utilizam ícone visual acompanhado de texto claro e descritivo (nunca ícones isolados).
+- **Compatibilidade com Leitores de Tela:** Atributos semânticos e regiões `aria-live="polite"` anunciam o progresso da análise e os resultados para softwares como TalkBack, NVDA e VoiceOver.
+- **Respeito a `prefers-reduced-motion`:** Usuários com sensibilidade a animações têm transições atenuadas automaticamente pelo CSS.
+- **Linguagem Acessível (~5º Ano):** O mediador social com IA gera textos com frases curtas (máximo de 15 a 18 palavras) em voz ativa direta, eliminando barreiras de compreensão.
 
 ---
 
