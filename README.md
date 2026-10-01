@@ -29,7 +29,10 @@ graph TD
 ```
 
 1. **Captura Acessível:** O usuário fotografa a **Frente e o Verso** do documento (com slots guiados) ou envia um arquivo PDF.
-2. **Decodificação Inteligente:** O backend se comunica com o SDK oficial da Google GenAI utilizando o modelo multimodal **`gemma-4-26b-a4b-it`** (com cadeia de fallback resiliente para `gemini-3.6-flash`, `gemini-3.1-flash-lite` e `gemini-3.8-flash`), analisando múltiplos lados de imagens e texto simultaneamente.
+2. **Decodificação Inteligente (Arquitetura Híbrida):** O backend possui um orquestrador flexível (`aiProvider`) com suporte dual:
+   - **Nuvem (Google Gemini):** Utiliza `gemini-2.0-flash` (com cadeia de fallback resiliente) para máxima velocidade, acurácia em receitas médicas e fácil execução em qualquer máquina ou VPS.
+   - **Local / Soberana (Qwen-VL via Ollama/LM Studio):** Permite executar localmente modelos multimodais como `qwen2.5-vl:3b` sem limite de requisições e com 100% de privacidade (os dados nunca saem da máquina).
+   - **Modo Auto/Híbrido:** Detecta automaticamente se o servidor local está ativo; se não estiver ou se a cota da nuvem esgotar, alterna de forma transparente.
 3. **Explicação Humanizada (~5º Ano):** A IA identifica o tipo de documento e remove qualquer jargão técnico, gerando explicações em frases curtas (máx. 15-18 palavras) e voz ativa direta.
 4. **Tópicos de Ação Direta:** Apresenta em destaque:
    - **O que é o documento** (ex: "Conta de Luz da Enel referente a Outubro").
@@ -155,13 +158,29 @@ cd projeto-idoso
    *(No Windows PowerShell, use `npm.cmd install` se scripts estiverem desabilitados)*
 3. Crie o arquivo `.env` a partir do exemplo:
    - Copie o arquivo `.env.example` e renomeie para `.env`.
-   - Insira sua chave de API:
+   - Configure o provedor desejado (`gemini`, `local` ou `auto`):
    ```env
    PORT=3001
-   GEMINI_MODEL=gemma-4-26b-a4b-it
+
+   # Modo de IA: "gemini" (padrão nuvem), "local" (Qwen offline) ou "auto" (híbrido inteligente)
+   AI_PROVIDER=auto
+
+   # Configuração Gemini (Nuvem):
+   GEMINI_MODEL=gemini-2.0-flash
    GEMINI_API_KEY=sua_chave_do_gemini_aqui
+
+   # Configuração Qwen Local (Opcional via Ollama / LM Studio):
+   LOCAL_AI_URL=http://127.0.0.1:11434
+   LOCAL_AI_MODEL=qwen2.5-vl:3b
    ```
-4. Inicie o servidor:
+4. **(Opcional) Para rodar o Qwen Localmente sem limites de cota:**
+   - Instale o [Ollama](https://ollama.com/) no seu computador.
+   - Baixe e execute o modelo de visão Qwen:
+     ```bash
+     ollama run qwen2.5-vl:3b
+     ```
+   - No `.env`, defina `AI_PROVIDER=local` (ou deixe `auto` para detecção automática).
+5. Inicie o servidor:
    ```bash
    npm run dev
    ```
@@ -169,8 +188,13 @@ cd projeto-idoso
 
 Você verá a confirmação no terminal:
 ```text
+====================================================
 🚀 Servidor Tradutor de Burocracia rodando na porta 3001
+🤖 Provedor de IA configurado: [AUTO]
+🛡️  Segurança: Helmet, Rate-Limit, CORS e Magic-Bytes ativados
+🔒 LGPD: Armazenamento exclusivo em memória RAM (sem disco)
 🔗 Health Check: http://localhost:3001/api/health
+====================================================
 ```
 
 ---
@@ -193,6 +217,28 @@ Você verá a confirmação no terminal:
    *(Ou `npm.cmd run dev` no Windows PowerShell)*
 4. Abra seu navegador no endereço:
    👉 **`http://localhost:5173`**
+
+---
+
+## 🦙 Como Rodar o Modelo Local (Qwen2.5-VL via Ollama)
+
+Se você deseja rodar a Inteligência Artificial **100% no seu computador**, sem limites de requisições por minuto e com privacidade absoluta (as fotos dos documentos nunca saem da sua máquina):
+
+### Passo a Passo:
+
+1. **Instale o Ollama:**
+   - Baixe e instale o [Ollama para Windows](https://ollama.com/download/windows) (ou Mac/Linux).
+2. **Baixe e execute o Qwen de Visão:**
+   - Abra o terminal e rode:
+     ```bash
+     ollama run qwen2.5-vl:3b
+     ```
+   - *(Ele fará o download do modelo Qwen2.5-VL de 3 bilhões de parâmetros, que tem ótimo equilíbrio entre velocidade e leitura em português).*
+3. **Detecção Automática:**
+   - No arquivo `backend/.env`, se estiver com `AI_PROVIDER=auto`, o backend detectará o modelo local automaticamente ao ser iniciado!
+   - Se preferir forçar 100% local, defina `AI_PROVIDER=local`.
+4. **Inicie o Backend:**
+   - Ao rodar `node server.js` ou `npm run dev`, o backend carregará a IA local e processará os documentos sem consumir cotas da nuvem.
 
 ---
 

@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import dotenv from 'dotenv';
-import { analyzeDocumentImages, answerDocumentQuestion } from './services/geminiService.js';
+import { analyzeDocumentImages, answerDocumentQuestion, getAiProviderInfo } from './services/aiProvider.js';
 import { detectMimeFromMagicBytes, ALLOWED_MIME_TYPES } from './utils/fileValidation.js';
 import { safeLog } from './utils/logger.js';
 
@@ -106,13 +106,15 @@ const upload = multer({
 });
 
 // Endpoint de verificação de status e saúde
-app.get('/api/health', (req, res) => {
-  const hasKey = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim() !== '');
+app.get('/api/health', async (req, res) => {
+  const providerInfo = await getAiProviderInfo();
   res.json({
     status: 'online',
     service: 'Tradutor de Burocracia & Saúde API',
-    model: process.env.GEMINI_MODEL || 'gemini-flash-lite-latest',
-    geminiKeyConfigured: hasKey,
+    provider: providerInfo.configuredProvider,
+    geminiKeyConfigured: providerInfo.geminiKeyConfigured,
+    geminiModel: providerInfo.geminiModel,
+    localAi: providerInfo.localAi,
     environment: process.env.NODE_ENV || 'development'
   });
 });
@@ -300,9 +302,11 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  const provider = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
   console.log(`====================================================`);
   console.log(`🚀 Servidor Tradutor de Burocracia rodando na porta ${PORT}`);
+  console.log(`🤖 Provedor de IA configurado: [${provider.toUpperCase()}]`);
   console.log(`🛡️  Segurança: Helmet, Rate-Limit, CORS e Magic-Bytes ativados`);
   console.log(`🔒 LGPD: Armazenamento exclusivo em memória RAM (sem disco)`);
   console.log(`🔗 Health Check: http://localhost:${PORT}/api/health`);
