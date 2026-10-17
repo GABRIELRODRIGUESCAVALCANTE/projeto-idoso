@@ -3,9 +3,20 @@ import { SYSTEM_INSTRUCTION, DOCUMENT_RESPONSE_SCHEMA } from '../prompts/documen
 import { QA_SYSTEM_INSTRUCTION, buildQAPrompt } from '../prompts/qaPrompt.js';
 import { safeLog } from '../utils/logger.js';
 import { validateDocumentAnalysis } from '../schemas/documentSchema.js';
+import { validateBarcode } from '../utils/barcodeValidator.js';
 
 // Função auxiliar para aguardar milissegundos
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Timeout resiliente para chamadas de IA (evita requisições pendentes indefinidamente)
+const withTimeout = (promise, ms = 35000) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Tempo limite da chamada ao modelo excedido (${Math.round(ms / 1000)}s)`)), ms)
+    )
+  ]);
+};
 
 export async function analyzeDocumentImages(input) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -32,12 +43,10 @@ export async function analyzeDocumentImages(input) {
   const configured = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : [];
   const candidateModels = [
     ...configured,
+    'gemini-2.5-flash',
     'gemini-2.0-flash',
     'gemini-1.5-flash',
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite',
-    'gemini-3.6-flash',
-    'gemini-3.8-flash'
+    'gemini-2.5-pro'
   ];
   const uniqueModels = [...new Set(candidateModels)];
 
@@ -63,6 +72,7 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
     "consequenciaAtraso": "Nenhuma consequência ou detalhes",
     "avisoConferencia": ""
   },
+  "linhaDigitavel": "47 ou 48 dígitos se visível ou null",
   "pontosDeAtencao": [],
   "alertaEtico": "Aviso de segurança e conferência",
   "textoParaVoz": "Texto caloroso para leitura em voz alta",
@@ -82,28 +92,28 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
 
   for (const modelName of uniqueModels) {
     try {
-      safeLog.info(`Tentando análise com o modelo estável: ${modelName} (${files.length} páginas)`);
+      safeLog.info(`Tentando análise com o modelo: ${modelName} (${files.length} páginas)`);
 
       const config = {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: 'application/json',
+        responseSchema: DOCUMENT_RESPONSE_SCHEMA,
         temperature: 0.1 // Baixa temperatura para consistência e prevenção de alucinações
       };
 
-      if (modelName.startsWith('gemini-3.8') || modelName.startsWith('gemini-1.5')) {
-        config.responseSchema = DOCUMENT_RESPONSE_SCHEMA;
-      }
-
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: [
-          {
-            role: 'user',
-            parts
-          }
-        ],
-        config
-      });
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model: modelName,
+          contents: [
+            {
+              role: 'user',
+              parts
+            }
+          ],
+          config
+        }),
+        35000 // 35 segundos de timeout
+      );
 
       const responseText = response.text;
       if (!responseText) {
@@ -132,8 +142,30 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
         throw new Error(`Estrutura da análise inválida: ${validation.error}`);
       }
 
-      safeLog.info(`Sucesso na análise e validação Zod com o modelo ${modelName} (confiança: ${validation.data.confianca})`);
-      return validation.data;
+      const docData = validation.data;
+
+      // Verificação determinística matemática de código de barras / linha digitável (B1)
+      if (docData.linhaDigitavel) {
+        const barcodeCheck = validateBarcode(docData.linhaDigitavel);
+        docData.codigoBarrasInfo = barcodeCheck;
+
+        if (barcodeCheck && barcodeCheck.valido) {
+          safeLog.info(`Código de barras validado matematicamente com sucesso (${barcodeCheck.tipo})`);
+          if (barcodeCheck.valorCalculado) {
+            docData.valoresEPrazos.valorPrincipal = barcodeCheck.valorCalculado;
+            docData.valoresEPrazos.avisoConferencia = `✅ Valor conferido matematicamente pelo código de barras: ${barcodeCheck.valorCalculado}${barcodeCheck.dataVencimentoCalculada ? ` com vencimento em ${barcodeCheck.dataVencimentoCalculada}` : ''}`;
+            docData.confianca = 'alta';
+          }
+        } else if (barcodeCheck && !barcodeCheck.valido && barcodeCheck.mensagem) {
+          safeLog.warn('Dígitos verificadores da linha digitável não conferem. Alerta emitido.');
+          docData.confianca = 'baixa';
+          docData.pontosDeAtencao = docData.pontosDeAtencao || [];
+          docData.pontosDeAtencao.push('Atenção: A numeração do código de barras parece cortada ou ilegível na foto. Por favor, confira os valores no papel original.');
+        }
+      }
+
+      safeLog.info(`Sucesso na análise e validação Zod com o modelo ${modelName} (confiança: ${docData.confianca})`);
+      return docData;
     } catch (err) {
       lastError = err;
       const errorMsg = err.message || '';
@@ -194,12 +226,10 @@ export async function answerDocumentQuestion({ documentData, question, history =
   const configured = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : [];
   const candidateModels = [
     ...configured,
+    'gemini-2.5-flash',
     'gemini-2.0-flash',
     'gemini-1.5-flash',
-    'gemini-2.5-flash',
-    'gemini-3.1-flash-lite',
-    'gemini-3.6-flash',
-    'gemini-3.8-flash'
+    'gemini-2.5-pro'
   ];
   const uniqueModels = [...new Set(candidateModels)];
 
@@ -210,19 +240,22 @@ export async function answerDocumentQuestion({ documentData, question, history =
     try {
       safeLog.info(`Respondendo dúvida com o modelo: ${modelName}`);
 
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: promptText }]
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model: modelName,
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: promptText }]
+            }
+          ],
+          config: {
+            systemInstruction: QA_SYSTEM_INSTRUCTION,
+            temperature: 0.3
           }
-        ],
-        config: {
-          systemInstruction: QA_SYSTEM_INSTRUCTION,
-          temperature: 0.3
-        }
-      });
+        }),
+        25000 // 25s timeout para Q&A
+      );
 
       const responseText = response.text;
       if (!responseText) {

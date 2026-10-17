@@ -2,6 +2,7 @@ import { SYSTEM_INSTRUCTION } from '../prompts/documentPrompt.js';
 import { QA_SYSTEM_INSTRUCTION, buildQAPrompt } from '../prompts/qaPrompt.js';
 import { safeLog } from '../utils/logger.js';
 import { validateDocumentAnalysis } from '../schemas/documentSchema.js';
+import { validateBarcode } from '../utils/barcodeValidator.js';
 
 // Configurações com valores padrão resilientes
 const getLocalConfig = () => {
@@ -59,7 +60,7 @@ function normalizeDocumentData(raw) {
   return {
     categoria: raw.categoria || 'OUTRO',
     tipoDocumento: raw.tipoDocumento || 'Documento analisado',
-    confianca: ['alta', 'media', 'baixa'].includes(raw.confianca) ? raw.confianca : 'media',
+    confianca: ['alta', 'media', 'baixa'].includes(raw.confianca) ? raw.confianca : 'baixa',
     resumoSimples: raw.resumoSimples || 'Informações resumidas do documento.',
     acoesEssenciais: Array.isArray(raw.acoesEssenciais) ? raw.acoesEssenciais : [],
     valoresEPrazos: {
@@ -68,6 +69,8 @@ function normalizeDocumentData(raw) {
       consequenciaAtraso: raw.valoresEPrazos?.consequenciaAtraso || 'Nenhuma consequência imediata identificada',
       avisoConferencia: raw.valoresEPrazos?.avisoConferencia || ''
     },
+    linhaDigitavel: raw.linhaDigitavel || null,
+    codigoBarrasInfo: null,
     pontosDeAtencao: Array.isArray(raw.pontosDeAtencao) ? raw.pontosDeAtencao : [],
     alertaEtico: raw.alertaEtico || 'Sempre confira os dados originais no documento físico ou consulte o órgão emissor.',
     textoParaVoz: raw.textoParaVoz || raw.resumoSimples || 'Documento analisado com sucesso.',
@@ -266,7 +269,7 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
 
   const parsed = extractJsonFromText(rawOutput);
   if (!parsed) {
-    safeLog.warn('Saída bruta do modelo local não pôde ser convertida em JSON:', rawOutput.slice(0, 300));
+    safeLog.warn('Saída do modelo local não pôde ser convertida em JSON estruturado.');
     throw new Error('O modelo local gerou uma resposta que não continha um JSON válido.');
   }
 
@@ -279,8 +282,29 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
     throw new Error(`Estrutura da análise do modelo local é inválida: ${validation.error}`);
   }
 
-  safeLog.info(`Sucesso na análise com modelo local ${model} (confiança: ${validation.data.confianca})`);
-  return validation.data;
+  const docData = validation.data;
+
+  // Verificação determinística matemática de código de barras / linha digitável (B1)
+  if (docData.linhaDigitavel) {
+    const barcodeCheck = validateBarcode(docData.linhaDigitavel);
+    docData.codigoBarrasInfo = barcodeCheck;
+
+    if (barcodeCheck && barcodeCheck.valido) {
+      safeLog.info(`Código de barras validado pelo modelo local (${barcodeCheck.tipo})`);
+      if (barcodeCheck.valorCalculado) {
+        docData.valoresEPrazos.valorPrincipal = barcodeCheck.valorCalculado;
+        docData.valoresEPrazos.avisoConferencia = `✅ Valor conferido matematicamente pelo código de barras: ${barcodeCheck.valorCalculado}${barcodeCheck.dataVencimentoCalculada ? ` com vencimento em ${barcodeCheck.dataVencimentoCalculada}` : ''}`;
+        docData.confianca = 'alta';
+      }
+    } else if (barcodeCheck && !barcodeCheck.valido && barcodeCheck.mensagem) {
+      docData.confianca = 'baixa';
+      docData.pontosDeAtencao = docData.pontosDeAtencao || [];
+      docData.pontosDeAtencao.push('Atenção: A numeração do código de barras parece cortada ou ilegível na foto. Por favor, confira no papel físico.');
+    }
+  }
+
+  safeLog.info(`Sucesso na análise com modelo local ${model} (confiança: ${docData.confianca})`);
+  return docData;
 }
 
 /**

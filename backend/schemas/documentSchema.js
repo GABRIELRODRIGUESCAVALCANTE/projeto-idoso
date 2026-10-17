@@ -10,7 +10,8 @@ export const documentSchema = z.object({
     'OUTRO'
   ]),
   tipoDocumento: z.string().min(1, 'O nome amigável do documento é obrigatório'),
-  confianca: z.enum(['alta', 'media', 'baixa']).default('alta'),
+  // Correção de Segurança C3: Default seguro sempre 'baixa' para nunca assumir alta nitidez por omissão
+  confianca: z.enum(['alta', 'media', 'baixa']).default('baixa'),
   resumoSimples: z.string().min(5, 'O resumo explicativo simples deve conter conteúdo válido'),
   acoesEssenciais: z.array(z.string()).default([]),
   valoresEPrazos: z.object({
@@ -19,6 +20,14 @@ export const documentSchema = z.object({
     consequenciaAtraso: z.string().default('Nenhuma consequência imediata identificada'),
     avisoConferencia: z.string().optional().default('')
   }),
+  linhaDigitavel: z.string().nullable().optional().default(null),
+  codigoBarrasInfo: z.object({
+    valido: z.boolean(),
+    tipo: z.string().optional(),
+    valorCalculado: z.string().nullable().optional(),
+    dataVencimentoCalculada: z.string().nullable().optional(),
+    mensagem: z.string().optional()
+  }).nullable().optional().default(null),
   pontosDeAtencao: z.array(z.string()).default([]),
   alertaEtico: z.string().min(1, 'O alerta ético preventivo é obrigatório'),
   textoParaVoz: z.string().min(5, 'O texto formatado para voz é obrigatório'),
@@ -54,3 +63,16 @@ export function validateDocumentAnalysis(data) {
     data: result.data
   };
 }
+
+// Schema de validação rigorosa para a rota de Tira-Dúvidas (Prevenção de injeção e adulteração C5)
+export const askQuestionSchema = z.object({
+  question: z.string().min(1, 'A dúvida não pode ser vazia').max(500, 'A pergunta excede o limite de tamanho seguro'),
+  documentData: z.record(z.any()), // Objeto contendo os dados do documento
+  history: z.array(
+    z.object({
+      question: z.string().max(500),
+      answer: z.string().max(2000)
+    })
+  ).max(10, 'Histórico excede o limite de turnos').optional().default([])
+});
+

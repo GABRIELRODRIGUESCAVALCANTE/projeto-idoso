@@ -7,11 +7,15 @@ import dotenv from 'dotenv';
 import { analyzeDocumentImages, answerDocumentQuestion, getAiProviderInfo } from './services/aiProvider.js';
 import { detectMimeFromMagicBytes, ALLOWED_MIME_TYPES } from './utils/fileValidation.js';
 import { safeLog } from './utils/logger.js';
+import { askQuestionSchema } from './schemas/documentSchema.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Suporte a proxy reverso seguro (Nginx, Render, Railway, etc.) para rate-limiting correto
+app.set('trust proxy', 1);
 
 // 1. Cabeçalhos de Segurança HTTP com Helmet
 app.use(
@@ -108,13 +112,19 @@ const upload = multer({
 // Endpoint de verificação de status e saúde
 app.get('/api/health', async (req, res) => {
   const providerInfo = await getAiProviderInfo();
+  const isProd = process.env.NODE_ENV === 'production';
+
   res.json({
     status: 'online',
     service: 'Tradutor de Burocracia & Saúde API',
     provider: providerInfo.configuredProvider,
     geminiKeyConfigured: providerInfo.geminiKeyConfigured,
     geminiModel: providerInfo.geminiModel,
-    localAi: providerInfo.localAi,
+    localAi: {
+      isOnline: providerInfo.localAi?.isOnline || false,
+      model: providerInfo.localAi?.model || null,
+      ...(isProd ? {} : { url: providerInfo.localAi?.url })
+    },
     environment: process.env.NODE_ENV || 'development'
   });
 });
@@ -221,31 +231,27 @@ app.post(
 // Endpoint secundário: Tira-Dúvidas com IA sobre o Documento
 app.post('/api/ask-question', aiLimiter, async (req, res) => {
   try {
-    const { documentData, question, history } = req.body;
-
-    if (!question || typeof question !== 'string' || question.trim() === '') {
+    // Validação estrita do payload (C5: Prevenção contra injeção e adulteração)
+    const parseResult = askQuestionSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const firstIssue = parseResult.error.issues?.[0];
       return res.status(400).json({
         success: false,
-        error: 'Por favor, digite ou fale a sua dúvida.'
+        error: firstIssue?.message || 'Dados inválidos fornecidos para responder à dúvida.'
       });
     }
 
-    if (!documentData) {
-      return res.status(400).json({
-        success: false,
-        error: 'Dados do documento não fornecidos para responder à dúvida.'
-      });
-    }
+    const { documentData, question, history } = parseResult.data;
 
     // LGPD: NUNCA logar o texto da pergunta em produção (pode conter dados médicos ou judiciais sensíveis)
     safeLog.info(
-      `Dúvida recebida para documento (${documentData.categoria || 'Geral'}) [tamanho da pergunta: ${question.trim().length} chars]`
+      `Dúvida recebida para documento (${documentData.categoria || 'Geral'}) [tamanho da pergunta: ${question.length} chars]`
     );
 
     const answer = await answerDocumentQuestion({
       documentData,
-      question: question.trim(),
-      history: Array.isArray(history) ? history : []
+      question,
+      history
     });
 
     safeLog.info('Dúvida respondida com sucesso pela IA');

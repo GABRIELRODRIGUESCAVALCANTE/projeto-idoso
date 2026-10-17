@@ -12,6 +12,7 @@ import {
   Trash2,
   Layers
 } from 'lucide-react';
+import { compressImageIfNeeded } from '../utils/imageCompressor';
 
 export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onRequestConsent }) {
   // Estados para suportar Frente e Verso ou arquivo PDF único
@@ -22,6 +23,7 @@ export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onR
   const [backPreview, setBackPreview] = useState(null);
 
   const [pdfFile, setPdfFile] = useState(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   // Helper para exigir consentimento prévio antes de abrir a câmera ou seletor de arquivos
   const handleTriggerAction = (actionFn) => {
@@ -39,7 +41,7 @@ export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onR
   const fileBackRef = useRef(null);
   const pdfInputRef = useRef(null);
 
-  const handleFrontChange = (e) => {
+  const handleFrontChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
@@ -47,18 +49,30 @@ export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onR
         return;
       }
       setPdfFile(null);
-      setFrontFile(file);
-      if (frontPreview) URL.revokeObjectURL(frontPreview);
-      setFrontPreview(URL.createObjectURL(file));
+      setIsCompressing(true);
+      try {
+        const optimizedFile = await compressImageIfNeeded(file);
+        setFrontFile(optimizedFile);
+        if (frontPreview) URL.revokeObjectURL(frontPreview);
+        setFrontPreview(URL.createObjectURL(optimizedFile));
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
-  const handleBackChange = (e) => {
+  const handleBackChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setBackFile(file);
-      if (backPreview) URL.revokeObjectURL(backPreview);
-      setBackPreview(URL.createObjectURL(file));
+      setIsCompressing(true);
+      try {
+        const optimizedFile = await compressImageIfNeeded(file);
+        setBackFile(optimizedFile);
+        if (backPreview) URL.revokeObjectURL(backPreview);
+        setBackPreview(URL.createObjectURL(optimizedFile));
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 

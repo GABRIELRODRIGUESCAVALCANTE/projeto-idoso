@@ -28,21 +28,23 @@ graph TD
     E --> F[Tela limpa com botões grandes e áudio em voz alta nativo]
 ```
 
-1. **Captura Acessível:** O usuário fotografa a **Frente e o Verso** do documento (com slots guiados) ou envia um arquivo PDF.
+1. **Captura Acessível & Otimizada:** O usuário fotografa a **Frente e o Verso** do documento (com slots guiados) ou envia um arquivo PDF. O sistema conta com **compressão automática de fotos via Canvas API** no navegador, reduzindo arquivos de 10MB para menos de 500KB sem perda de legibilidade, viabilizando uploads ultrarrápidos em conexões 3G/4G.
 2. **Decodificação Inteligente (Arquitetura Híbrida):** O backend possui um orquestrador flexível (`aiProvider`) com suporte dual:
-   - **Nuvem (Google Gemini):** Utiliza `gemini-2.0-flash` (com cadeia de fallback resiliente) para máxima velocidade, acurácia em receitas médicas e fácil execução em qualquer máquina ou VPS.
+   - **Nuvem (Google Gemini):** Utiliza `gemini-2.5-flash` (com cadeia de fallback resiliente e timeout de 35s) para máxima velocidade, acurácia em receitas médicas e fácil execução em qualquer máquina ou VPS.
    - **Local / Soberana (Qwen-VL via Ollama/LM Studio):** Permite executar localmente modelos multimodais como `qwen2.5-vl:3b` sem limite de requisições e com 100% de privacidade (os dados nunca saem da máquina).
    - **Modo Auto/Híbrido:** Detecta automaticamente se o servidor local está ativo; se não estiver ou se a cota da nuvem esgotar, alterna de forma transparente.
-3. **Explicação Humanizada (~5º Ano):** A IA identifica o tipo de documento e remove qualquer jargão técnico, gerando explicações em frases curtas (máx. 15-18 palavras) e voz ativa direta.
-4. **Tópicos de Ação Direta:** Apresenta em destaque:
+3. **Verificação Matemática Determinística de Boletos:** O backend analisa a linha digitável (47 dígitos FEBRABAN ou 48 dígitos de concessionárias) utilizando os algoritmos de **Módulo 10 e Módulo 11**, recalculando o valor monetário exato e o vencimento para blindar o cidadão contra alucinações de valores e golpes de boletos adulterados.
+4. **Plano Acessível de Medicação com Lembretes:** Para receitas médicas, identifica os remédios e gera um painel acessível com Nome, Dosagem e Instruções de uso, permitindo salvar lembretes diários no formato `.ics` para o calendário do celular (Google Calendar / Apple Calendar).
+5. **Explicação Humanizada (~5º Ano):** A IA identifica o tipo de documento e remove qualquer jargão técnico, gerando explicações em frases curtas (máx. 15-18 palavras) e voz ativa direta.
+6. **Tópicos de Ação Direta:** Apresenta em destaque:
    - **O que é o documento** (ex: "Conta de Luz da Enel referente a Outubro").
    - **O que este papel diz** (resumo em 2 ou 3 frases simples).
    - **Valores e Prazos** (quanto pagar e até quando).
    - **O que você deve fazer** (lista passo a passo numerada).
    - **Alertas Éticos** (ex: receitas médicas reforçam a consulta com o farmacêutico no balcão).
-5. **Acessibilidade por Áudio com Karaokê:** O botão **"Ouvir Agora"** aciona a síntese de voz nativa (`window.speechSynthesis`) com **destaque visual em tempo real da frase lida** (efeito karaokê via evento `boundary`), permitindo acompanhar a leitura com facilidade.
-6. **Acessibilidade Visual (Zoom Real & Alto Contraste):** Botões **A- / A+** no topo permitem aumentar proporcionalmente todos os textos e cards da aplicação em 4 níveis. Inclui botão de **Modo Alto Contraste** (fundo preto e tipografia amarela de alto contraste).
-7. **Tira-Dúvidas Interativo com IA:** O cidadão pode tirar dúvidas sobre o documento usando perguntas frequentes de 1 clique, digitando ou falando pelo **Microfone**, com leitura em voz alta da resposta.
+7. **Acessibilidade por Áudio com Karaokê:** O botão **"Ouvir Agora"** aciona a síntese de voz nativa (`window.speechSynthesis`) com **destaque visual em tempo real da frase lida** (efeito karaokê via evento `boundary`), permitindo acompanhar a leitura com facilidade.
+8. **Acessibilidade Visual (Zoom Real & Alto Contraste):** Botões **A- / A+** no topo permitem aumentar proporcionalmente todos os textos e cards da aplicação em 4 níveis. Inclui botão de **Modo Alto Contraste** (fundo preto e tipografia amarela de alto contraste).
+9. **Tira-Dúvidas Interativo com IA:** O cidadão pode tirar dúvidas sobre o documento usando perguntas frequentes de 1 clique, digitando ou falando pelo **Microfone**, com leitura em voz alta da resposta e validação rigorosa de schema para segurança.
 
 ---
 
@@ -75,21 +77,24 @@ Construído em **React** com **Vite** e **Tailwind CSS**:
 ```
 projeto-idoso/
 ├── backend/
-│   ├── .env.example              # Modelo de configuração (modelo ativo gemma-4-26b-a4b-it)
+│   ├── .env.example              # Modelo de configuração (modelo ativo gemini-2.5-flash)
 │   ├── .env                      # Chave da API Gemini (ignorado pelo git por segurança)
 │   ├── package.json              # Dependências e script de benchmark (npm run test:eval)
-│   ├── server.js                 # Servidor Express com Helmet, Rate-Limit, CORS e Magic-Bytes
+│   ├── server.js                 # Servidor Express com Helmet, Rate-Limit, CORS, Trust-Proxy e Magic-Bytes
 │   ├── eval/
 │   │   ├── dataset.js            # Conjunto de benchmark com 26 documentos de teste
 │   │   └── runEval.js            # Runner de avaliação de acurácia, schemas e segurança
 │   ├── schemas/
-│   │   └── documentSchema.js     # Schema Zod para validação estrita da resposta da IA
+│   │   └── documentSchema.js     # Schema Zod para validação estrita da resposta da IA e do Q&A
 │   ├── prompts/
-│   │   ├── documentPrompt.js     # System Prompt e Schema estruturado do Gemini
+│   │   ├── documentPrompt.js     # System Prompt e Schema estruturado do Gemini (com linha digitável)
 │   │   └── qaPrompt.js           # Prompt do Tira-Dúvidas contextual
 │   ├── services/
-│   │   └── geminiService.js      # Integração multimodal com modelos resilientes e retry
+│   │   ├── aiProvider.js         # Orquestrador híbrido de inteligência artificial
+│   │   ├── geminiService.js      # Integração multimodal com modelos resilientes e timeout
+│   │   └── localAiService.js     # Integração local compatível com Ollama e LM Studio (sanitizada)
 │   └── utils/
+│       ├── barcodeValidator.js   # Validador determinístico de código de barras (Módulo 10 e 11)
 │       ├── fileValidation.js     # Validação de tipos MIME por Magic Bytes
 │       └── logger.js             # Logger sanitizado compatível com LGPD
 │
@@ -104,15 +109,17 @@ projeto-idoso/
 │       ├── App.jsx               # Fluxo principal, zoom real e estados de tela
 │       ├── index.css             # Estilos globais e foco acessível
 │       ├── utils/
-│       │   └── speech.js         # Controlador da Web Speech API nativa (pt-BR com boundary/karaokê)
+│       │   ├── speech.js         # Controlador da Web Speech API nativa (pt-BR com boundary/karaokê)
+│       │   └── imageCompressor.js # Compressão acessível de imagens via Canvas no navegador
 │       └── components/
 │           ├── Header.jsx        # Cabeçalho com zoom (A- / A+) e Alto Contraste
 │           ├── ConsentModal.jsx  # Consentimento explícito LGPD prévio ao primeiro upload
 │           ├── ProfessionalDisclaimer.jsx # Aviso explícito de isenção de responsabilidade profissional
-│           ├── DocumentUploader.jsx # Captura guiada para Frente e Verso ou PDF
+│           ├── DocumentUploader.jsx # Captura guiada para Frente e Verso ou PDF com compressão
 │           ├── LoadingState.jsx  # Feedback acolhedor ("Lendo seu documento...")
 │           ├── AudioPlayer.jsx   # Reprodutor acessível (Play/Pause/Velocidade/Karaokê)
-│           ├── ResultCard.jsx    # Card estruturado (o que é, ações, prazos, ética)
+│           ├── ResultCard.jsx    # Card estruturado com selo de código de barras e medicamentos
+│           ├── MedicationPlan.jsx # Plano visual de remédios com lembrete diário (.ics)
 │           └── DocumentQA.jsx    # Tira-dúvidas com IA, microfone e áudio
 │
 ├── .gitignore                    # Garante que chaves de API e node_modules não sejam commitados
@@ -328,11 +335,17 @@ Valores monetários e prazos de vencimento são apresentados acompanhados de um 
 *"⚠️ Confira sempre no papel original: R$ 142,50 até 25/10/2024"*.
 
 ### 7. Modelo Ativo e Arquitetura Resiliente de Fallback
-Para evitar os picos de sobrecarga global (HTTP 503) e as cotas estritas de 20 requisições/dia dos modelos experimentais do Free Tier, o projeto adota o modelo multimodal **`gemma-4-26b-a4b-it`** como padrão ativo, configurável via variável `GEMINI_MODEL`.
-- O backend implementa uma **cadeia automática de fallback** (`gemma-4-26b-a4b-it` → `gemini-3.6-flash` → `gemini-3.1-flash-lite` → `gemini-3.8-flash`).
+Para garantir máxima velocidade, acurácia em receitas médicas e disponibilidade constante, o projeto adota o modelo multimodal **`gemini-2.5-flash`** como padrão ativo, configurável via variável `GEMINI_MODEL`.
+- O backend implementa uma **cadeia automática de fallback** (`gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-1.5-flash` → `gemini-2.5-pro`) com **timeout de 35s** por chamada.
 - Qualquer oscilação transitória do Google (500 INTERNAL, 502, 503 UNAVAILABLE ou 429 RESOURCE_EXHAUSTED) aciona imediatamente o próximo modelo resiliente sem quebrar a requisição do cidadão.
 
-### 8. Conjunto de Avaliação Contínua (26 Casos de Teste)
+### 8. Verificação Determinística por Módulo 10 e 11 (Código de Barras)
+Para eliminar qualquer possibilidade de alucinação em valores de contas e boletos:
+- O módulo `barcodeValidator.js` inspeciona a linha digitável transcrita.
+- Valida os dígitos verificadores (DVs) oficiais de boletos bancários (47 dígitos) e contas de concessionárias de água/luz (48 dígitos).
+- Quando autenticado, o valor calculado matematicamente prevalece e o frontend exibe o **Selo de Garantia Matemática**.
+
+### 9. Conjunto de Avaliação Contínua (26 Casos de Teste)
 Criada uma suíte automatizada de testes (`eval/dataset.js` e `eval/runEval.js`) contendo **26 documentos sintéticos e anonimizados** (contas públicas, receitas legíveis, receitas ilegíveis/rasuradas, notificações judiciais, benefícios sociais e memes fora de escopo).
 
 Para rodar a avaliação antes de qualquer mudança de prompt ou modelo:

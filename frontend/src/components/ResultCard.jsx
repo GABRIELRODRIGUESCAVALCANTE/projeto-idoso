@@ -14,11 +14,14 @@ import {
   Eye,
   HelpCircle,
   Pill,
-  Camera
+  Camera,
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 import AudioPlayer from './AudioPlayer';
 import DocumentQA from './DocumentQA';
 import ProfessionalDisclaimer from './ProfessionalDisclaimer';
+import MedicationPlan from './MedicationPlan';
 
 export default function ResultCard({ data, onReset, fontSizeClass }) {
   if (!data) return null;
@@ -26,10 +29,12 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
   const {
     categoria,
     tipoDocumento,
-    confianca = 'alta',
+    confianca = 'baixa',
     resumoSimples,
     acoesEssenciais = [],
     valoresEPrazos = {},
+    linhaDigitavel,
+    codigoBarrasInfo,
     pontosDeAtencao = [],
     alertaEtico,
     textoParaVoz,
@@ -173,19 +178,47 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
 
           {/* ⚠️ ALERTA ULTRACONSERVADOR PARA RECEITAS MÉDICAS */}
           {isMedical && (
-            <div className="bg-rose-50/80 border border-rose-200 rounded-2xl p-4 text-rose-950 space-y-2">
-              <div className="flex items-center gap-2 font-extrabold text-rose-900 text-sm sm:text-base">
-                <Pill className="w-5 h-5 text-rose-600 flex-shrink-0" />
-                <span>Protocolo de Segurança para Medicamentos:</span>
-              </div>
-              <p className="text-xs sm:text-sm text-rose-900 leading-relaxed">
-                A IA transcreve apenas o que foi lido com total clareza e <strong>nunca adivinha</strong> remédios ou doses ilegíveis. Se houver caligrafia difícil, confirme com o farmacêutico no balcão da farmácia antes de ingerir qualquer medicamento.
-              </p>
-              {detalhesReceita?.possuiTrechoIlegivel && (
-                <div className="mt-2 p-2.5 bg-rose-100/80 rounded-xl border border-rose-300 text-xs font-bold text-rose-950">
-                  ⚠️ Esta receita possui trechos que a IA não conseguiu ler com segurança. Não tome medicamentos sem validação profissional.
+            <div className="space-y-4">
+              <div className="bg-rose-50/80 border border-rose-200 rounded-2xl p-4 text-rose-950 space-y-2">
+                <div className="flex items-center gap-2 font-extrabold text-rose-900 text-sm sm:text-base">
+                  <Pill className="w-5 h-5 text-rose-600 flex-shrink-0" />
+                  <span>Protocolo de Segurança para Medicamentos:</span>
                 </div>
-              )}
+                <p className="text-xs sm:text-sm text-rose-900 leading-relaxed">
+                  A IA transcreve apenas o que foi lido com total clareza e <strong>nunca adivinha</strong> remédios ou doses ilegíveis. Se houver caligrafia difícil, confirme com o farmacêutico no balcão da farmácia antes de ingerir qualquer medicamento.
+                </p>
+                {detalhesReceita?.possuiTrechoIlegivel && (
+                  <div className="mt-2 p-2.5 bg-rose-100/80 rounded-xl border border-rose-300 text-xs font-bold text-rose-950">
+                    ⚠️ Esta receita possui trechos que a IA não conseguiu ler com segurança. Não tome medicamentos sem validação profissional.
+                  </div>
+                )}
+              </div>
+
+              {/* B2: Plano de Medicamentos Acessível */}
+              <MedicationPlan detalhesReceita={detalhesReceita} fontSizeClass={fontSizeClass} />
+            </div>
+          )}
+
+          {/* B1: SELO DE VALIDAÇÃO MATEMÁTICA DE CÓDIGO DE BARRAS / BOLETO */}
+          {codigoBarrasInfo && codigoBarrasInfo.valido && (
+            <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-3.5 sm:p-4 text-emerald-950 flex items-start gap-3 shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 text-xs sm:text-sm">
+                <div className="font-extrabold text-emerald-950 text-sm sm:text-base flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                  <span>Valor e Linha Digitável Verificados com Sucesso</span>
+                </div>
+                <p className="text-emerald-900 leading-relaxed font-medium">
+                  {codigoBarrasInfo.mensagem || 'A linha digitável deste boleto/conta foi validada pelos dígitos verificadores oficiais.'}
+                </p>
+                {codigoBarrasInfo.valorCalculado && (
+                  <div className="inline-block px-2.5 py-1 rounded-lg bg-emerald-100/80 text-emerald-950 text-xs font-extrabold">
+                    Valor confirmado pelo código de barras: {codigoBarrasInfo.valorCalculado}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
