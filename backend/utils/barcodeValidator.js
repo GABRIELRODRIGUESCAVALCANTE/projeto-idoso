@@ -14,6 +14,37 @@ export function sanitizeBarcode(code) {
 }
 
 /**
+ * Principais instituições pelo código de compensação (COMPE/FEBRABAN).
+ * Os 3 primeiros dígitos da linha digitável de um boleto bancário identificam o banco emissor.
+ */
+export const BANCOS_FEBRABAN = {
+  '001': 'Banco do Brasil',
+  '033': 'Santander',
+  '041': 'Banrisul',
+  '070': 'BRB',
+  '077': 'Banco Inter',
+  '104': 'Caixa Econômica Federal',
+  '136': 'Unicred',
+  '208': 'BTG Pactual',
+  '212': 'Banco Original',
+  '237': 'Bradesco',
+  '260': 'Nubank',
+  '290': 'PagBank',
+  '323': 'Mercado Pago',
+  '336': 'C6 Bank',
+  '341': 'Itaú Unibanco',
+  '380': 'PicPay',
+  '422': 'Banco Safra',
+  '745': 'Citibank',
+  '748': 'Sicredi',
+  '756': 'Sicoob'
+};
+
+export function identificarBanco(codigo) {
+  return BANCOS_FEBRABAN[codigo] || null;
+}
+
+/**
  * Cálculo do Módulo 10 (usado nos campos dos boletos bancários e concessionárias)
  */
 function modulo10(bloco) {
@@ -116,10 +147,15 @@ function validarBoletoBancario(numeros) {
   }
 
   const vencimento = calcularDataVencimentoBancario(fatorStr);
+  const codigoBanco = numeros.substring(0, 3);
 
   return {
     valido: isValid,
     tipo: 'Boleto Bancário (FEBRABAN)',
+    formato: 'BANCARIO',
+    codigoBanco,
+    banco: identificarBanco(codigoBanco),
+    valorCentavos: !isNaN(valorCentavos) && valorCentavos > 0 ? valorCentavos : null,
     valorCalculado: valorFormatado,
     dataVencimentoCalculada: vencimento,
     mensagem: isValid
@@ -183,6 +219,10 @@ function validarBoletoConcessionaria(numeros) {
   return {
     valido: isValid,
     tipo: `Conta de Serviço Público (${tiposNomes[subTipo] || 'Concessionária'})`,
+    formato: 'ARRECADACAO',
+    segmento: subTipo,
+    segmentoNome: tiposNomes[subTipo] || null,
+    valorCentavos: !isNaN(valorCentavos) && valorCentavos > 0 ? valorCentavos : null,
     valorCalculado: valorFormatado,
     dataVencimentoCalculada: null, // Concessionárias não possuem fator padronizado obrigatório
     mensagem: isValid

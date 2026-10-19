@@ -3,7 +3,7 @@ import { SYSTEM_INSTRUCTION, DOCUMENT_RESPONSE_SCHEMA } from '../prompts/documen
 import { QA_SYSTEM_INSTRUCTION, buildQAPrompt } from '../prompts/qaPrompt.js';
 import { safeLog } from '../utils/logger.js';
 import { validateDocumentAnalysis } from '../schemas/documentSchema.js';
-import { validateBarcode } from '../utils/barcodeValidator.js';
+import { applyBarcodeAudit } from '../utils/barcodeAudit.js';
 
 // Função auxiliar para aguardar milissegundos
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -144,25 +144,10 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
 
       const docData = validation.data;
 
-      // Verificação determinística matemática de código de barras / linha digitável (B1)
-      if (docData.linhaDigitavel) {
-        const barcodeCheck = validateBarcode(docData.linhaDigitavel);
-        docData.codigoBarrasInfo = barcodeCheck;
+      // Verificação determinística + auditoria antifraude do código de barras (B1)
+      applyBarcodeAudit(docData, safeLog);
 
-        if (barcodeCheck && barcodeCheck.valido) {
-          safeLog.info(`Código de barras validado matematicamente com sucesso (${barcodeCheck.tipo})`);
-          if (barcodeCheck.valorCalculado) {
-            docData.valoresEPrazos.valorPrincipal = barcodeCheck.valorCalculado;
-            docData.valoresEPrazos.avisoConferencia = `✅ Valor conferido matematicamente pelo código de barras: ${barcodeCheck.valorCalculado}${barcodeCheck.dataVencimentoCalculada ? ` com vencimento em ${barcodeCheck.dataVencimentoCalculada}` : ''}`;
-            docData.confianca = 'alta';
-          }
-        } else if (barcodeCheck && !barcodeCheck.valido && barcodeCheck.mensagem) {
-          safeLog.warn('Dígitos verificadores da linha digitável não conferem. Alerta emitido.');
-          docData.confianca = 'baixa';
-          docData.pontosDeAtencao = docData.pontosDeAtencao || [];
-          docData.pontosDeAtencao.push('Atenção: A numeração do código de barras parece cortada ou ilegível na foto. Por favor, confira os valores no papel original.');
-        }
-      }
+      docData.meta = { provedor: 'gemini', modelo: modelName };
 
       safeLog.info(`Sucesso na análise e validação Zod com o modelo ${modelName} (confiança: ${docData.confianca})`);
       return docData;

@@ -117,3 +117,11 @@ class SpeechController {
 }
 
 export const speechController = new SpeechController();
+
+export function speakText(text, options) {
+  return speechController.speak(text, options);
+}
+
+export function stopSpeaking() {
+  return speechController.stop();
+}

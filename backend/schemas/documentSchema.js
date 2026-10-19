@@ -6,6 +6,11 @@ export const documentSchema = z.object({
     'SAUDE_RECEITA',
     'NOTIFICACAO_LEGAL',
     'BENEFICIO_SOCIAL',
+    'EQUIPAMENTO_HARDWARE',
+    'ERRO_SISTEMA_TELA',
+    'ETIQUETA_PATRIMONIO',
+    'FATURA_TELECOM_TI',
+    'ALERTA_GOLPE_SUSPEITO',
     'FORA_DE_ESCOPO',
     'OUTRO'
   ]),
@@ -24,13 +29,34 @@ export const documentSchema = z.object({
   codigoBarrasInfo: z.object({
     valido: z.boolean(),
     tipo: z.string().optional(),
+    formato: z.enum(['BANCARIO', 'ARRECADACAO']).optional(),
+    codigoBanco: z.string().optional(),
+    banco: z.string().nullable().optional(),
+    segmento: z.string().optional(),
+    segmentoNome: z.string().nullable().optional(),
+    valorCentavos: z.number().nullable().optional(),
     valorCalculado: z.string().nullable().optional(),
     dataVencimentoCalculada: z.string().nullable().optional(),
-    mensagem: z.string().optional()
+    mensagem: z.string().optional(),
+    auditoria: z.object({
+      status: z.enum(['consistente', 'atencao', 'divergente', 'ilegivel']),
+      alertas: z.array(z.string()).default([]),
+      valorLidoNoPapel: z.string().nullable().optional(),
+      empresaHomologada: z.boolean().optional().default(false)
+    }).optional()
   }).nullable().optional().default(null),
   pontosDeAtencao: z.array(z.string()).default([]),
   alertaEtico: z.string().min(1, 'O alerta ético preventivo é obrigatório'),
   textoParaVoz: z.string().min(5, 'O texto formatado para voz é obrigatório'),
+  // Módulo Específico: Diagnóstico Técnico para Nível 2 / Help Desk
+  diagnosticoTecnico: z.object({
+    dispositivoIdentificado: z.string().nullable().optional().default(null),
+    statusLeds: z.record(z.string(), z.string()).nullable().optional().default(null),
+    codigoErroDetectado: z.string().nullable().optional().default(null),
+    causaProvavel: z.string().default('Não especificado'),
+    nivelGravidade: z.enum(['baixa', 'media', 'alta', 'critica']).default('media'),
+    acaoRecomendadaTecnico: z.string().default('Verificar conexão física e reiniciar equipamento')
+  }).nullable().optional().default(null),
   detalhesReceita: z.object({
     possuiTrechoIlegivel: z.boolean().default(false),
     medicamentosIdentificados: z.array(
@@ -74,5 +100,17 @@ export const askQuestionSchema = z.object({
       answer: z.string().max(2000)
     })
   ).max(10, 'Histórico excede o limite de turnos').optional().default([])
+});
+
+// Schema para criação de ticket de suporte e integração com Help Desk (Zendesk, GLPI, etc.)
+export const createTicketSchema = z.object({
+  nomeCliente: z.string().min(2, 'O nome do cliente é obrigatório').max(100),
+  contato: z.string().min(5, 'Telefone, WhatsApp ou e-mail de contato é obrigatório').max(100),
+  tipoProblema: z.string().default('Suporte Técnico Geral'),
+  protocolo: z.string().optional(),
+  diagnosticoTecnico: z.any().optional().default(null),
+  resumoSimples: z.string().optional().default(''),
+  etapasTentadas: z.array(z.string()).default([]),
+  observacoes: z.string().max(1000).optional().default('')
 });
 

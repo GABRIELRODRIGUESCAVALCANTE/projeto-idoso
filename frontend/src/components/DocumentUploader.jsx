@@ -10,11 +10,18 @@ import {
   FileCheck, 
   Plus, 
   Trash2,
-  Layers
+  Layers,
+  ShieldAlert,
+  Pill,
+  Zap,
+  PlayCircle,
+  Wifi,
+  Monitor
 } from 'lucide-react';
 import { compressImageIfNeeded } from '../utils/imageCompressor';
+import { DEMO_PRESETS } from '../utils/demoData';
 
-export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onRequestConsent }) {
+export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onRequestConsent, onSelectDemo }) {
   // Estados para suportar Frente e Verso ou arquivo PDF único
   const [frontFile, setFrontFile] = useState(null);
   const [frontPreview, setFrontPreview] = useState(null);
@@ -232,6 +239,106 @@ export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onR
               <strong>Dica importante:</strong> Se o seu documento tem informações atrás (como instruções de remédio ou código de barras no verso da conta), você poderá adicionar o <strong>verso</strong> logo em seguida!
             </p>
           </div>
+
+          {/* Seção de Exemplos Rápidos para Demonstração e Testes (1 Toque) */}
+          {onSelectDemo && (
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <PlayCircle className="w-4 h-4 text-sky-600" />
+                  Exemplos Prontos para Demonstração (1 Toque):
+                </span>
+                <span className="text-[11px] font-semibold text-slate-500">
+                  Ideal para apresentações sem foto
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => onSelectDemo('roteador_fibra')}
+                  className="p-3 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-left transition-all group focus-visible:ring-4 focus-visible:ring-indigo-500"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Wifi className="w-4 h-4 text-indigo-600" />
+                    <span className="font-extrabold text-xs text-indigo-950">1. Roteador Fibra (LOS)</span>
+                  </div>
+                  <p className="text-[11px] text-indigo-900 line-clamp-2">
+                    Luz vermelha piscando, diagnóstico de LEDs e guia interativo
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSelectDemo('tela_azul')}
+                  className="p-3 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-left transition-all group focus-visible:ring-4 focus-visible:ring-blue-500"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Monitor className="w-4 h-4 text-blue-600" />
+                    <span className="font-extrabold text-xs text-blue-950">2. Tela Azul (PC)</span>
+                  </div>
+                  <p className="text-[11px] text-blue-900 line-clamp-2">
+                    Código de parada do Windows decodificado para o cliente
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSelectDemo('golpe_falso_suporte')}
+                  className="p-3 rounded-xl border border-rose-300 bg-rose-50/80 hover:bg-rose-100 text-left transition-all group focus-visible:ring-4 focus-visible:ring-rose-500"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                    <span className="font-extrabold text-xs text-rose-950">3. Falso Suporte (SMS)</span>
+                  </div>
+                  <p className="text-[11px] text-rose-900 line-clamp-2">
+                    Alerta de golpe com ameaça de corte de internet
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSelectDemo('conta_luz')}
+                  className="p-3 rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-left transition-all group focus-visible:ring-4 focus-visible:ring-sky-500"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Zap className="w-4 h-4 text-amber-600" />
+                    <span className="font-extrabold text-xs text-sky-950">4. Conta de Luz</span>
+                  </div>
+                  <p className="text-[11px] text-sky-900 line-clamp-2">
+                    Boleto autêntico auditado com jargões e bandeira tarifária
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSelectDemo('golpe_adulterado')}
+                  className="p-3 rounded-xl border border-rose-300 bg-rose-50/80 hover:bg-rose-100 text-left transition-all group focus-visible:ring-4 focus-visible:ring-rose-500"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                    <span className="font-extrabold text-xs text-rose-950">5. Golpe Boleto</span>
+                  </div>
+                  <p className="text-[11px] text-rose-900 line-clamp-2">
+                    Conta de R$ 142 que cobra R$ 987 no código (Antifraude)
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSelectDemo('receita_medica')}
+                  className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-left transition-all group focus-visible:ring-4 focus-visible:ring-emerald-500"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Pill className="w-4 h-4 text-emerald-600" />
+                    <span className="font-extrabold text-xs text-emerald-950">6. Receita Médica</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-900 line-clamp-2">
+                    Prescrição de 3 remédios com horários para o cuidador
+                  </p>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

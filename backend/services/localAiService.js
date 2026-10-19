@@ -1,14 +1,53 @@
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { SYSTEM_INSTRUCTION } from '../prompts/documentPrompt.js';
 import { QA_SYSTEM_INSTRUCTION, buildQAPrompt } from '../prompts/qaPrompt.js';
 import { safeLog } from '../utils/logger.js';
 import { validateDocumentAnalysis } from '../schemas/documentSchema.js';
-import { validateBarcode } from '../utils/barcodeValidator.js';
+import { applyBarcodeAudit } from '../utils/barcodeAudit.js';
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * Converte as primeiras páginas de um PDF em buffers de imagem PNG usando pdftoppm (se disponível no sistema)
+ */
+async function convertPdfToImages(pdfBuffer) {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdf-conv-'));
+  const inputPdf = path.join(tmpDir, 'input.pdf');
+
+  try {
+    await fs.promises.writeFile(inputPdf, pdfBuffer);
+    // Converte até 2 páginas (frente e verso) com 150 DPI para equilíbrio ideal entre legibilidade e velocidade
+    await execFileAsync('pdftoppm', ['-png', '-r', '150', '-f', '1', '-l', '2', inputPdf, path.join(tmpDir, 'page')]);
+
+    const files = (await fs.promises.readdir(tmpDir))
+      .filter((f) => f.startsWith('page-') && f.endsWith('.png'))
+      .sort();
+
+    if (files.length === 0) {
+      throw new Error('Nenhuma página de imagem gerada a partir do PDF.');
+    }
+
+    const images = [];
+    for (const f of files) {
+      images.push(await fs.promises.readFile(path.join(tmpDir, f)));
+    }
+    return images;
+  } finally {
+    try {
+      await fs.promises.rm(tmpDir, { recursive: true, force: true });
+    } catch (_) {}
+  }
+}
 
 // Configurações com valores padrão resilientes
 const getLocalConfig = () => {
   const rawUrl = process.env.LOCAL_AI_URL || 'http://127.0.0.1:11434';
   const url = rawUrl.replace(/\/+$/, ''); // Remove trailing slashes
-  const model = process.env.LOCAL_AI_MODEL || 'qwen2.5-vl:3b';
+  const model = process.env.LOCAL_AI_MODEL || 'qwen2.5vl:3b';
   const timeoutMs = parseInt(process.env.LOCAL_AI_TIMEOUT || '180000', 10); // 3 minutos para inferência local em CPU
   return { url, model, timeoutMs };
 };
@@ -139,7 +178,8 @@ async function callLocalVisionModel({ systemPrompt, userPrompt, base64Images = [
       stream: false,
       ...(jsonFormat ? { format: 'json' } : {}),
       options: {
-        temperature: 0.1
+        temperature: 0.1,
+        num_ctx: 8192
       }
     };
 
@@ -206,6 +246,12 @@ async function callLocalVisionModel({ systemPrompt, userPrompt, base64Images = [
         `Tempo limite esgotado (${Math.round(timeoutMs / 1000)}s) aguardando resposta da IA local. Na CPU, modelos de visão podem demorar mais ou o modelo pode não ter carregado.`
       );
     }
+    const combinedMsg = `${err.message || ''} ${lastError?.message || ''}`;
+    if (combinedMsg.includes('Failed to load image')) {
+      throw new Error(
+        'O modelo local de IA não conseguiu decodificar a imagem enviada. Certifique-se de que o arquivo é uma foto/imagem válida (JPG, PNG ou WebP).'
+      );
+    }
     throw new Error(
       `Não foi possível comunicar com o servidor de IA local em ${url}. Verifique se o Ollama/servidor local está rodando (erro: ${err.message || lastError?.message})`
     );
@@ -217,17 +263,41 @@ async function callLocalVisionModel({ systemPrompt, userPrompt, base64Images = [
  */
 export async function analyzeDocumentImages(input) {
   const { model, url } = getLocalConfig();
-  const files = Array.isArray(input?.files)
+  const rawFiles = Array.isArray(input?.files)
     ? input.files
     : (input?.buffer ? [{ buffer: input.buffer, mimeType: input.mimeType }] : []);
 
-  if (files.length === 0) {
+  if (rawFiles.length === 0) {
     throw new Error('Nenhum arquivo ou imagem foi fornecido para análise.');
   }
 
-  safeLog.info(`Iniciando análise com modelo local: ${model} via ${url} (${files.length} páginas)`);
+  safeLog.info(`Iniciando análise com modelo local: ${model} via ${url} (${rawFiles.length} arquivos recebidos)`);
 
-  const base64Images = files.map((file) => file.buffer.toString('base64'));
+  // Converte arquivos PDF em imagens PNG (o modelo local de visão aceita apenas imagens)
+  const base64Images = [];
+  for (const file of rawFiles) {
+    const isPdf =
+      file.mimeType === 'application/pdf' ||
+      (file.buffer && file.buffer.slice(0, 5).toString('ascii').startsWith('%PDF'));
+
+    if (isPdf) {
+      try {
+        safeLog.info('Documento em formato PDF detectado. Convertendo páginas em PNG para o modelo de visão...');
+        const pageBuffers = await convertPdfToImages(file.buffer);
+        for (const buf of pageBuffers) {
+          base64Images.push(buf.toString('base64'));
+        }
+        safeLog.info(`PDF convertido com sucesso em ${pageBuffers.length} página(s) de imagem.`);
+      } catch (convErr) {
+        safeLog.warn('Falha na conversão de PDF para imagem:', convErr.message);
+        throw new Error(
+          'O modelo local de IA (Ollama / Qwen-VL) aceita apenas arquivos de imagem (JPG, PNG, WebP). Para analisar este documento, envie uma foto ou print da página, ou configure a chave da API do Google Gemini no arquivo .env.'
+        );
+      }
+    } else {
+      base64Images.push(file.buffer.toString('base64'));
+    }
+  }
 
   const schemaContract = `
 Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
@@ -252,8 +322,8 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
   }
 }`;
 
-  const promptText = files.length > 1
-    ? `Analise as ${files.length} imagens/páginas deste documento em conjunto. Cruze todas as informações de ambos os lados para gerar uma explicação única, completa, humanizada e acessível conforme suas diretrizes de mediador social.\n${schemaContract}`
+  const promptText = base64Images.length > 1
+    ? `Analise as ${base64Images.length} imagens/páginas deste documento em conjunto. Cruze todas as informações de ambos os lados para gerar uma explicação única, completa, humanizada e acessível conforme suas diretrizes de mediador social.\n${schemaContract}`
     : `Analise este documento recebido e gere a explicação humanizada, acolhedora e acessível conforme suas diretrizes de mediador social.\n${schemaContract}`;
 
   const rawOutput = await callLocalVisionModel({
@@ -284,24 +354,10 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
 
   const docData = validation.data;
 
-  // Verificação determinística matemática de código de barras / linha digitável (B1)
-  if (docData.linhaDigitavel) {
-    const barcodeCheck = validateBarcode(docData.linhaDigitavel);
-    docData.codigoBarrasInfo = barcodeCheck;
+  // Verificação determinística + auditoria antifraude do código de barras (B1)
+  applyBarcodeAudit(docData, safeLog);
 
-    if (barcodeCheck && barcodeCheck.valido) {
-      safeLog.info(`Código de barras validado pelo modelo local (${barcodeCheck.tipo})`);
-      if (barcodeCheck.valorCalculado) {
-        docData.valoresEPrazos.valorPrincipal = barcodeCheck.valorCalculado;
-        docData.valoresEPrazos.avisoConferencia = `✅ Valor conferido matematicamente pelo código de barras: ${barcodeCheck.valorCalculado}${barcodeCheck.dataVencimentoCalculada ? ` com vencimento em ${barcodeCheck.dataVencimentoCalculada}` : ''}`;
-        docData.confianca = 'alta';
-      }
-    } else if (barcodeCheck && !barcodeCheck.valido && barcodeCheck.mensagem) {
-      docData.confianca = 'baixa';
-      docData.pontosDeAtencao = docData.pontosDeAtencao || [];
-      docData.pontosDeAtencao.push('Atenção: A numeração do código de barras parece cortada ou ilegível na foto. Por favor, confira no papel físico.');
-    }
-  }
+  docData.meta = { provedor: 'local', modelo: model };
 
   safeLog.info(`Sucesso na análise com modelo local ${model} (confiança: ${docData.confianca})`);
   return docData;

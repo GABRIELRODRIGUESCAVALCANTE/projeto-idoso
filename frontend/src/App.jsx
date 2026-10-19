@@ -5,7 +5,8 @@ import LoadingState from './components/LoadingState';
 import ResultCard from './components/ResultCard';
 import ConsentModal from './components/ConsentModal';
 import ProfessionalDisclaimer from './components/ProfessionalDisclaimer';
-import { AlertCircle, HelpCircle, HeartHandshake, ShieldCheck, RotateCcw } from 'lucide-react';
+import { AlertCircle, HelpCircle, HeartHandshake, ShieldCheck, RotateCcw, PlayCircle } from 'lucide-react';
+import { DEMO_PRESETS } from './utils/demoData';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -149,33 +150,14 @@ export default function App() {
     setIsLoading(false);
   };
 
-  // Exemplo de demonstração para testes imediatos sem envio de foto
-  const loadDemo = () => {
-    setResult({
-      categoria: 'CONTA_SERVICO',
-      tipoDocumento: 'Conta de Energia Elétrica (Enel)',
-      confianca: 'alta',
-      resumoSimples: 'Esta é a sua conta de luz do mês de outubro. O valor ficou um pouco mais alto porque o país usou usinas mais caras para gerar energia.',
-      acoesEssenciais: [
-        'Pagar a conta de R$ 142,50 até o dia 25 de outubro de 2024.',
-        'Pagar pelo aplicativo do banco, na lotérica ou pelo código Pix.',
-        'Guardar o comprovante de pagamento por 1 ano.'
-      ],
-      valoresEPrazos: {
-        valorPrincipal: 'R$ 142,50',
-        dataVencimento: '25/10/2024',
-        consequenciaAtraso: 'Após 15 dias de atraso pode haver corte e multa.',
-        avisoConferencia: 'Confira no papel original: R$ 142,50 até 25/10/2024'
-      },
-      pontosDeAtencao: [
-        'Veio cobrado um seguro residencial opcional de R$ 9,90.',
-        'Seu consumo foi de 180 kWh, 15% menor do que no mês passado.'
-      ],
-      alertaEtico: 'Este resumo é uma ajuda informativa. Em caso de dúvidas, ligue para a concessionária pelo 0800.',
-      textoParaVoz: 'Olá! Este documento é a sua conta de luz da Enel. O valor total é de cento e quarenta e dois reais e cinquenta centavos, e o vencimento é no dia vinte e cinco de outubro. Você precisa pagar até essa data para evitar juros ou corte. Um ponto de atenção é que veio cobrado um seguro de nove reais e noventa centavos que pode ser cancelado se você não pediu.'
-    });
+  // Carrega qualquer um dos presets de demonstração pré-auditados
+  const handleSelectDemo = (presetKey = 'conta_luz') => {
+    const demo = DEMO_PRESETS[presetKey] || DEMO_PRESETS.conta_luz;
+    setResult(demo);
     setError(null);
   };
+
+  const loadDemo = () => handleSelectDemo('conta_luz');
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
@@ -200,17 +182,53 @@ export default function App() {
         {!result && !isLoading && (
           <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-sky-50 border border-sky-200 text-xs sm:text-sm text-sky-900">
             <span className="flex items-center gap-2 font-semibold">
-              <HelpCircle className="w-5 h-5 text-sky-700 flex-shrink-0" />
-              Quer testar como funciona sem enviar uma foto real agora?
+              <PlayCircle className="w-5 h-5 text-sky-700 flex-shrink-0" />
+              Modo Demonstração (Pitch): Teste cenários sem câmera:
             </span>
-            <button
-              onClick={loadDemo}
-              aria-label="Carregar exemplo pronto de conta de luz para teste"
-              className="min-h-[44px] px-4 py-2.5 bg-white hover:bg-sky-100 font-extrabold rounded-xl border border-sky-300 text-sky-900 transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto focus-visible:ring-4 focus-visible:ring-sky-500"
-            >
-              <HelpCircle className="w-4 h-4 text-sky-600" />
-              <span>Ver Exemplo Pronto</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                onClick={() => handleSelectDemo('conta_luz')}
+                aria-label="Carregar exemplo de conta de luz"
+                className="px-3 py-1.5 bg-white hover:bg-sky-100 font-extrabold rounded-xl border border-sky-300 text-sky-900 transition-all text-xs"
+              >
+                ⚡ Conta de Luz
+              </button>
+              <button
+                onClick={() => handleSelectDemo('roteador_fibra')}
+                aria-label="Carregar exemplo de suporte técnico com roteador fibra"
+                className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 font-extrabold rounded-xl border border-indigo-300 text-indigo-900 transition-all text-xs"
+              >
+                📶 Roteador Fibra (LOS)
+              </button>
+              <button
+                onClick={() => handleSelectDemo('tela_azul')}
+                aria-label="Carregar exemplo de tela azul do Windows"
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 font-extrabold rounded-xl border border-blue-300 text-blue-900 transition-all text-xs"
+              >
+                💻 Tela Azul (PC)
+              </button>
+              <button
+                onClick={() => handleSelectDemo('golpe_falso_suporte')}
+                aria-label="Carregar exemplo de SMS de falso suporte"
+                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 font-extrabold rounded-xl border border-rose-300 text-rose-900 transition-all text-xs"
+              >
+                🛑 Falso Suporte (SMS)
+              </button>
+              <button
+                onClick={() => handleSelectDemo('golpe_adulterado')}
+                aria-label="Carregar exemplo de golpe antifraude"
+                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 font-extrabold rounded-xl border border-rose-300 text-rose-900 transition-all text-xs"
+              >
+                🚨 Golpe Boleto
+              </button>
+              <button
+                onClick={() => handleSelectDemo('receita_medica')}
+                aria-label="Carregar exemplo de receita médica"
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 font-extrabold rounded-xl border border-emerald-300 text-emerald-900 transition-all text-xs"
+              >
+                💊 Receita Médica
+              </button>
+            </div>
           </div>
         )}
 
@@ -246,6 +264,7 @@ export default function App() {
             isLoading={isLoading}
             hasConsent={hasConsent}
             onRequestConsent={handleRequestConsent}
+            onSelectDemo={handleSelectDemo}
           />
         )}
 

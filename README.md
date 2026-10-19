@@ -1,19 +1,22 @@
-# 📄 Tradutor de Burocracia & Saúde 🇧🇷
-### Decodificador Acessível de Documentos Cidadãos com IA Multimodal
+# 📄 Tradutor Cidadão & Plataforma de Suporte Técnico Inteligente 🇧🇷
+### Decodificador Acessível de Documentos & Assistente Multimodal de Suporte Técnico (Tier 0 & 1)
 
-> **Projeto de Extensão Universitária focado em Impacto Social e Cidadania**  
-> Uma aplicação web simples, responsiva e *mobile-first*, desenvolvida para que cidadãos — especialmente idosos ou pessoas com baixo letramento funcional — compreendam contas públicas, receitas médicas e notificações oficiais sem termos técnicos confusos, contando com recurso nativo de leitura em voz alta.
+> **Projeto de Impacto Social, Acessibilidade Universal e Inovação em Atendimento Técnico**  
+> Uma aplicação web moderna, responsiva e *mobile-first*, desenvolvida para que cidadãos — especialmente idosos ou pessoas com baixo letramento funcional — compreendam contas públicas, receitas médicas, notificações oficiais e estados de equipamentos de informática/rede (roteadores e telas de erro) sem jargões confusos, contando com autoatendimento assistido por voz e integração nativa com help desks.
 
 ---
 
-## 🎯 Objetivo e Impacto Social
+## 🎯 Objetivo e Impacto
 
-Muitos cidadãos brasileiros enfrentam grandes barreiras para compreender documentos do dia a dia:
-- Contas de água e energia com jargões regulatórios ("bandeira tarifária de escassez", "débito pretérito", "consumo faturado").
-- Notificações ou intimações judiciais em linguagem hermética que geram pânico desnecessário.
-- Receitas médicas com termos técnicos ("posologia", "via oral", caligrafia ilegível) que dificultam a continuidade do tratamento de saúde.
+Muitos cidadãos e clientes enfrentam grandes barreiras de comunicação no seu dia a dia:
+- **Contas de água, energia e telecom** com jargões regulatórios ("bandeira tarifária de escassez", "débito pretérito", "consumo faturado", "taxa de comodato").
+- **Receitas médicas** com termos herméticos ("posologia", "via oral", caligrafia ilegível) que colocam a saúde em risco.
+- **Falhas de informática e internet:** Clientes leigos ou idosos não compreendem os termos de suporte ("verifique o LED LOS vermelho", "erro de DNS", "código de parada BSOD"), gerando ansiedade, ligações demoradas (alto TMA) e sobrecarga nas equipes de atendimento Nível 1.
+- **Golpes de Falso Suporte e Boletos Falsos:** Clientes vulneráveis recebem SMS ou e-mails de cobrança indevida com links de phishing ou boletos adulterados.
 
-**O Tradutor Cidadão resolve esse problema traduzindo esses documentos para uma linguagem acolhedora, clara e com passos práticos sobre o que precisa ser feito.**
+**O sistema resolve esses desafios em duas frentes integradas:**
+1. **Frente Cidadão/Consumidor:** Tradução acolhedora em nível de 5º ano do ensino fundamental, com leitura por voz nativa (áudio karaokê), botões grandes, zoom visual de 4 níveis, alto contraste e assistente de resolução passo a passo.
+2. **Frente Operação de Suporte Técnico (Help Desk / ISP / TI):** Triagem visual de equipamentos, telemetria estruturada em JSON para o atendente Nível 2, temporizadores automáticos de autoatendimento e despacho direto de chamados para sistemas como Zendesk, Freshdesk, GLPI, Chatwoot e Jira.
 
 ---
 
@@ -21,54 +24,83 @@ Muitos cidadãos brasileiros enfrentam grandes barreiras para compreender docume
 
 ```mermaid
 graph TD
-    A[Cidadão tira foto ou faz upload do documento] --> B[Frontend envia para o Backend com upload seguro em RAM]
-    B --> C[IA Multimodal analisa texto e imagem do documento]
-    C --> D[System Prompt empático traduz jargões para linguagem popular]
-    D --> E[Retorna JSON estruturado com o que é, ações, valores e ética]
-    E --> F[Tela limpa com botões grandes e áudio em voz alta nativo]
+    A[Usuário tira foto do documento, roteador ou tela de erro] --> B[Frontend comprime imagem em RAM via Canvas API]
+    B --> C[Orquestrador Híbrido: Google Gemini Nuvem ou Qwen-VL Local]
+    C --> D[Análise Multimodal e Validação Determinística Zod / Módulo 10 e 11]
+    D --> E[Linguagem Empática para o Cliente + Telemetria Técnica para o Help Desk]
+    E --> F[Interface Acessível com Voz, Zoom e Alto Contraste]
+    F --> G{Problema Técnico Resolvido?}
+    G -- Sim --> H[Autoatendimento Concluído sem Fila]
+    G -- Não --> I[Abertura de Ticket com Diagnóstico Pré-preenchido e Webhook]
 ```
-
-1. **Captura Acessível & Otimizada:** O usuário fotografa a **Frente e o Verso** do documento (com slots guiados) ou envia um arquivo PDF. O sistema conta com **compressão automática de fotos via Canvas API** no navegador, reduzindo arquivos de 10MB para menos de 500KB sem perda de legibilidade, viabilizando uploads ultrarrápidos em conexões 3G/4G.
-2. **Decodificação Inteligente (Arquitetura Híbrida):** O backend possui um orquestrador flexível (`aiProvider`) com suporte dual:
-   - **Nuvem (Google Gemini):** Utiliza `gemini-2.5-flash` (com cadeia de fallback resiliente e timeout de 35s) para máxima velocidade, acurácia em receitas médicas e fácil execução em qualquer máquina ou VPS.
-   - **Local / Soberana (Qwen-VL via Ollama/LM Studio):** Permite executar localmente modelos multimodais como `qwen2.5-vl:3b` sem limite de requisições e com 100% de privacidade (os dados nunca saem da máquina).
-   - **Modo Auto/Híbrido:** Detecta automaticamente se o servidor local está ativo; se não estiver ou se a cota da nuvem esgotar, alterna de forma transparente.
-3. **Verificação Matemática Determinística de Boletos:** O backend analisa a linha digitável (47 dígitos FEBRABAN ou 48 dígitos de concessionárias) utilizando os algoritmos de **Módulo 10 e Módulo 11**, recalculando o valor monetário exato e o vencimento para blindar o cidadão contra alucinações de valores e golpes de boletos adulterados.
-4. **Plano Acessível de Medicação com Lembretes:** Para receitas médicas, identifica os remédios e gera um painel acessível com Nome, Dosagem e Instruções de uso, permitindo salvar lembretes diários no formato `.ics` para o calendário do celular (Google Calendar / Apple Calendar).
-5. **Explicação Humanizada (~5º Ano):** A IA identifica o tipo de documento e remove qualquer jargão técnico, gerando explicações em frases curtas (máx. 15-18 palavras) e voz ativa direta.
-6. **Tópicos de Ação Direta:** Apresenta em destaque:
-   - **O que é o documento** (ex: "Conta de Luz da Enel referente a Outubro").
-   - **O que este papel diz** (resumo em 2 ou 3 frases simples).
-   - **Valores e Prazos** (quanto pagar e até quando).
-   - **O que você deve fazer** (lista passo a passo numerada).
-   - **Alertas Éticos** (ex: receitas médicas reforçam a consulta com o farmacêutico no balcão).
-7. **Acessibilidade por Áudio com Karaokê:** O botão **"Ouvir Agora"** aciona a síntese de voz nativa (`window.speechSynthesis`) com **destaque visual em tempo real da frase lida** (efeito karaokê via evento `boundary`), permitindo acompanhar a leitura com facilidade.
-8. **Acessibilidade Visual (Zoom Real & Alto Contraste):** Botões **A- / A+** no topo permitem aumentar proporcionalmente todos os textos e cards da aplicação em 4 níveis. Inclui botão de **Modo Alto Contraste** (fundo preto e tipografia amarela de alto contraste).
-9. **Tira-Dúvidas Interativo com IA:** O cidadão pode tirar dúvidas sobre o documento usando perguntas frequentes de 1 clique, digitando ou falando pelo **Microfone**, com leitura em voz alta da resposta e validação rigorosa de schema para segurança.
 
 ---
 
-## 🛠️ Tecnologias e Dependências
+## ✨ Principais Funcionalidades
+
+### 1. Decodificação Multimodal Híbrida (Nuvem + Soberana)
+* **Google Gemini (Nuvem):** Utiliza `gemini-2.5-flash` como modelo padrão com cadeia de fallback resiliente (`gemini-2.0-flash` e `gemini-1.5-flash`) e timeout de 35s.
+* **Qwen-VL via Ollama/LM Studio (Local/Soberana):** Suporte nativo a modelos locais como `qwen2.5-vl:3b` para 100% de privacidade e zero custo de cota.
+* **Modo Auto/Híbrido:** Detecta automaticamente se o servidor local está ativo; se não estiver, alterna de forma transparente para a nuvem.
+
+### 2. Módulo de Suporte Técnico & Diagnóstico de Hardware (Tier 0 & 1)
+* **Diagnóstico Visual de Equipamentos (Roteadores / Modems / ONUs):**
+  * Reconhece luzes e LEDs em tempo real (Power, PON, LOS piscando vermelho, WLAN, LAN).
+  * Traduz para o cliente o que está acontecendo (ex: *"A luz vermelha LOS indica que o cabo de fibra externa está sem sinal"*).
+  * Gera o bloco estruturado `diagnosticoTecnico` com causa provável, nível de gravidade e ação recomendada para a equipe de TI.
+* **Decodificação de Telas de Erro (Windows BSOD / Navegadores):**
+  * Identifica códigos de parada (ex: `CRITICAL_PROCESS_DIED`, `MEMORY_MANAGEMENT`), tranquilizando o usuário sobre seus arquivos e orientando a reinicialização segura.
+* **Assistente de Resolução Guiada (`TroubleshootingWizard`):**
+  * Transforma as ações em um checklist interativo acessível.
+  * **Temporizador Regressivo Inteligente:** Detecta tempos de espera nas instruções (ex: *"aguarde 20 segundos para reiniciar"*) e abre contagem na tela com aviso em áudio.
+  * Botão *"Ouvir este passo"* com síntese de voz pausada.
+  * Checagem de desfecho: comemora se resolveu ou oferece transbordo para suporte humano.
+* **Abertura e Integração de Tickets (`OpenTicketModal`):**
+  * Permite abrir chamado técnico com 1 clique.
+  * Já preenche automaticamente os testes feitos e o diagnóstico técnico da IA.
+  * Campo de observações com **reconhecimento de voz (microfone)** para o cliente ditar sem precisar digitar.
+  * Despacho assíncrono via Webhook (`WEBHOOK_HELPDESK_URL`) para ferramentas corporativas (Zendesk, GLPI, Freshdesk, Chatwoot, Jira).
+* **Painel Técnico Nível 2 ("Visão do Técnico"):**
+  * Console escuro de telemetria técnica exibindo status visual dos LEDs em tempo real (bolinhas piscantes vermelhas/verdes), modelo do dispositivo e causa provável.
+  * Botão *"Copiar JSON"* com 1 toque para colar no ticket interno do suporte.
+
+### 3. Blindagem Antifraude e Validação de Boletos
+* **Auditoria Determinística (Módulo 10 e 11):**
+  * Valida linhas digitáveis de 47 dígitos (boletos bancários FEBRABAN) e 48 dígitos (concessionárias de água, energia, gás e telecomunicações).
+  * Recalcula matematicamente o valor e vencimento reais, confrontando com o que está escrito no papel.
+  * Alerta com urgência se houver divergência de valor ou desvio de banco (**Golpe do Boleto Adulterado**).
+* **Homologação de Contas de Telecomunicações:** Identifica se o código de barras pertence legitimamente a concessionárias de telecom/internet (segmento 4) ou instituições bancárias reconhecidas.
+* **Detecção de Phishing / Falso Suporte:** Identifica mensagens golpistas de SMS ou WhatsApp ameaçando corte de serviços ou solicitando transferências Pix.
+
+### 4. Saúde & Medicamentos Acessíveis
+* **Plano de Medicação com Lembretes:** Identifica remédios em receitas médicas, organiza posologia em horários amigáveis e permite exportar arquivos `.ics` para o calendário do celular (Google Calendar / Apple Calendar).
+* **Postura Ultraconservadora:** A IA nunca adivinha nomes ou doses ilegíveis; marca explicitamente os trechos rasurados para conferência no balcão da farmácia.
+
+### 5. Acessibilidade Universal (WCAG 2.2 Nível AA)
+* **Síntese de Voz Nativa com Karaokê:** O botão *"Ouvir Agora"* lê o resumo destacando visualmente a frase lida em tempo real via evento `boundary`.
+* **Zoom Visual Real em 4 Níveis (A- / A+):** Aumenta proporcionalmente a raiz tipográfica do aplicativo (100%, 115%, 130%, 145%).
+* **Modo Alto Contraste:** Tema de alto contraste amarelo sobre fundo preto para usuários com baixa visão.
+* **Tira-Dúvidas Contextual com Microfone:** Permite fazer perguntas sobre o documento por texto ou voz, ouvindo as respostas da IA.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
 
 ### Backend (API REST)
-Construído em **Node.js** com os seguintes pacotes:
-- **`@google/genai`**: SDK oficial do Google para comunicação multimodal com o Gemini.
-- **`express`**: Framework web para criação dos endpoints HTTP.
-- **`zod`**: Validação estrita de schemas tipados para impedir payloads corrompidos ou alucinações.
-- **`multer`**: Gerencia uploads exclusivamente em **memória RAM** (descarte imediato pós-análise).
-- **`helmet`**: Cabeçalhos HTTP de segurança para mitigação de vulnerabilidades comuns da web.
-- **`express-rate-limit`**: Proteção contra abusos, ataques de força bruta e exaustão de cota de IA.
-- **`cors`**: Liberação restrita às origens confiáveis do frontend.
-- **`dotenv`**: Carregamento seguro de variáveis de ambiente.
+* **Node.js (ES Modules)**
+* **Express**: Roteamento HTTP e middlewares de segurança.
+* **`@google/genai`**: SDK oficial para modelos multimodais Gemini.
+* **Zod**: Validação estrita de tipagem e prevenção de alucinações.
+* **Multer**: Gerenciamento seguro de uploads exclusivamente em memória RAM (sem disco).
+* **Helmet & Express-Rate-Limit**: Blindagem HTTP e proteção contra abuso de requisições.
+* **Node Test Runner nativo (`node:test`)**: Suíte de testes automatizados determinísticos.
 
 ### Frontend (Aplicação Web)
-Construído em **React** com **Vite** e **Tailwind CSS**:
-- **`react` & `react-dom`**: Renderização reativa e componentes modulares.
-- **`vite`**: Ferramenta moderna de compilação e servidor de desenvolvimento ultra-rápido.
-- **`tailwindcss`**: Estilização utilitária focada em acessibilidade, alto contraste e mobile-first.
-- **`lucide-react`**: Conjunto de ícones vetoriais modernos e compreensíveis.
-- **`clsx` & `tailwind-merge`**: Utilitários para controle dinâmico de classes de acessibilidade.
-- **`Web Speech API`**: API nativa dos navegadores para leitura por voz (dispensa serviços pagos de terceiros).
+* **React 18** + **Vite**
+* **Tailwind CSS**: Estilização responsiva, alto contraste e acessibilidade.
+* **Lucide React**: Ícones visuais de alta legibilidade.
+* **Web Speech API**: Síntese de voz nativa (TTS) e reconhecimento de fala (STT) sem serviços pagos.
+* **Canvas API**: Compressão inteligente de imagens no cliente (reduz uploads em até 95%).
 
 ---
 
@@ -77,24 +109,28 @@ Construído em **React** com **Vite** e **Tailwind CSS**:
 ```
 projeto-idoso/
 ├── backend/
-│   ├── .env.example              # Modelo de configuração (modelo ativo gemini-2.5-flash)
-│   ├── .env                      # Chave da API Gemini (ignorado pelo git por segurança)
-│   ├── package.json              # Dependências e script de benchmark (npm run test:eval)
-│   ├── server.js                 # Servidor Express com Helmet, Rate-Limit, CORS, Trust-Proxy e Magic-Bytes
+│   ├── .env.example              # Modelo de configuração (Gemini, Local AI e Webhook Helpdesk)
+│   ├── .env                      # Chave da API e configurações locais (ignorado no Git)
+│   ├── package.json              # Dependências e scripts de teste
+│   ├── server.js                 # Servidor Express com Helmet, Rate-Limit, Tickets e CORS
 │   ├── eval/
 │   │   ├── dataset.js            # Conjunto de benchmark com 26 documentos de teste
 │   │   └── runEval.js            # Runner de avaliação de acurácia, schemas e segurança
 │   ├── schemas/
-│   │   └── documentSchema.js     # Schema Zod para validação estrita da resposta da IA e do Q&A
+│   │   └── documentSchema.js     # Schemas Zod (Documentos, Diagnóstico Técnico e Tickets)
 │   ├── prompts/
-│   │   ├── documentPrompt.js     # System Prompt e Schema estruturado do Gemini (com linha digitável)
+│   │   ├── documentPrompt.js     # System Prompt e Schema estruturado multimodal
 │   │   └── qaPrompt.js           # Prompt do Tira-Dúvidas contextual
 │   ├── services/
 │   │   ├── aiProvider.js         # Orquestrador híbrido de inteligência artificial
 │   │   ├── geminiService.js      # Integração multimodal com modelos resilientes e timeout
-│   │   └── localAiService.js     # Integração local compatível com Ollama e LM Studio (sanitizada)
+│   │   └── localAiService.js     # Integração local compatível com Ollama e LM Studio
+│   ├── tests/
+│   │   ├── barcodeAudit.test.js  # Testes de auditoria determinística de boletos
+│   │   └── supportTickets.test.js # Testes de diagnóstico de hardware e schema de tickets
 │   └── utils/
 │       ├── barcodeValidator.js   # Validador determinístico de código de barras (Módulo 10 e 11)
+│       ├── barcodeAudit.js       # Auditoria antifraude e homologação de convênios
 │       ├── fileValidation.js     # Validação de tipos MIME por Magic Bytes
 │       └── logger.js             # Logger sanitizado compatível com LGPD
 │
@@ -102,36 +138,48 @@ projeto-idoso/
 │   ├── package.json              # Dependências da interface
 │   ├── vite.config.js            # Proxy configurado para a porta 3001
 │   ├── tailwind.config.js        # Design tokens e tipografia de alta legibilidade
-│   ├── postcss.config.js
 │   ├── index.html                # Ponto de entrada com metatags de acessibilidade
 │   └── src/
-│       ├── main.jsx
-│       ├── App.jsx               # Fluxo principal, zoom real e estados de tela
+│       ├── App.jsx               # Fluxo principal, zoom real e presets de demonstração
 │       ├── index.css             # Estilos globais e foco acessível
 │       ├── utils/
-│       │   ├── speech.js         # Controlador da Web Speech API nativa (pt-BR com boundary/karaokê)
-│       │   └── imageCompressor.js # Compressão acessível de imagens via Canvas no navegador
+│       │   ├── speech.js         # Controlador nativo de voz e karaokê acessível
+│       │   ├── demoData.js       # Presets de demonstração (Roteador, BSOD, Boletos, Remédios)
+│       │   └── imageCompressor.js # Compressão acessível de fotos via Canvas no navegador
 │       └── components/
 │           ├── Header.jsx        # Cabeçalho com zoom (A- / A+) e Alto Contraste
 │           ├── ConsentModal.jsx  # Consentimento explícito LGPD prévio ao primeiro upload
-│           ├── ProfessionalDisclaimer.jsx # Aviso explícito de isenção de responsabilidade profissional
-│           ├── DocumentUploader.jsx # Captura guiada para Frente e Verso ou PDF com compressão
-│           ├── LoadingState.jsx  # Feedback acolhedor ("Lendo seu documento...")
-│           ├── AudioPlayer.jsx   # Reprodutor acessível (Play/Pause/Velocidade/Karaokê)
-│           ├── ResultCard.jsx    # Card estruturado com selo de código de barras e medicamentos
+│           ├── DocumentUploader.jsx # Upload Frente/Verso ou PDF com presets de 1 toque
+│           ├── ResultCard.jsx    # Card estruturado, Painel N2 do Técnico e ações
+│           ├── TroubleshootingWizard.jsx # Assistente passo a passo com temporizador e voz
+│           ├── OpenTicketModal.jsx # Abertura de chamado com ditado por voz e protocolo
 │           ├── MedicationPlan.jsx # Plano visual de remédios com lembrete diário (.ics)
+│           ├── AudioPlayer.jsx   # Reprodutor acessível (Play/Pause/Velocidade/Karaokê)
 │           └── DocumentQA.jsx    # Tira-dúvidas com IA, microfone e áudio
 │
-├── .gitignore                    # Garante que chaves de API e node_modules não sejam commitados
-└── README.md                     # Documentação completa
+├── .gitignore
+└── README.md                     # Documentação completa do projeto
 ```
+
+---
+
+## 📡 Endpoints da API REST
+
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| `POST` | `/api/analyze-document` | Upload de fotos/PDFs, validação de Magic Bytes e inferência multimodal (Gemini/Qwen). |
+| `POST` | `/api/ask-question` | Tira-dúvidas interativo contextualizado sobre o documento analisado. |
+| `POST` | `/api/tickets/create` | Abertura de chamado com diagnóstico técnico, protocolo e despacho via Webhook. |
+| `GET` | `/api/tickets/:protocolo` | Consulta de ticket e diagnóstico técnico por protocolo. |
+| `GET` | `/api/tickets` | Listagem em memória dos chamados recentes para o painel de atendimento. |
+| `GET` | `/api/health` | Status de saúde do servidor, provedor ativo (Gemini/Local) e modelos configurados. |
 
 ---
 
 ## 🚀 Guia de Instalação e Execução Passo a Passo
 
 ### Pré-requisitos
-- [Node.js](https://nodejs.org/) instalado (versão 18 ou superior).
+* [Node.js](https://nodejs.org/) instalado (versão 18 ou superior).
 
 ---
 
@@ -143,16 +191,7 @@ cd projeto-idoso
 
 ---
 
-### Passo 2: Obter a Chave Gratuita da API do Gemini
-1. Acesse o [Google AI Studio](https://aistudio.google.com/).
-2. Faça login com sua conta Google (Gmail).
-3. Clique em **"Get API key"** e selecione **"Create API key in new project"**.
-4. Copie a chave gerada (ela começa com `AIzaSy...`).
-> *Nota: O plano gratuito (Free Tier) não exige cartão de crédito e permite até 1.500 requisições diárias.*
-
----
-
-### Passo 3: Configurar e Rodar o Backend
+### Passo 2: Configurar e Iniciar o Backend
 
 1. Entre na pasta `backend`:
    ```bash
@@ -162,53 +201,32 @@ cd projeto-idoso
    ```bash
    npm install
    ```
-   *(No Windows PowerShell, use `npm.cmd install` se scripts estiverem desabilitados)*
 3. Crie o arquivo `.env` a partir do exemplo:
-   - Copie o arquivo `.env.example` e renomeie para `.env`.
-   - Configure o provedor desejado (`gemini`, `local` ou `auto`):
+   ```bash
+   cp .env.example .env
+   ```
+4. Edite o `.env` com sua chave do Google Gemini (ou configure para uso local):
    ```env
    PORT=3001
-
-   # Modo de IA: "gemini" (padrão nuvem), "local" (Qwen offline) ou "auto" (híbrido inteligente)
    AI_PROVIDER=auto
+   GEMINI_MODEL=gemini-2.5-flash
+   GEMINI_API_KEY=sua_chave_aqui
 
-   # Configuração Gemini (Nuvem):
-   GEMINI_MODEL=gemini-2.0-flash
-   GEMINI_API_KEY=sua_chave_do_gemini_aqui
-
-   # Configuração Qwen Local (Opcional via Ollama / LM Studio):
-   LOCAL_AI_URL=http://127.0.0.1:11434
-   LOCAL_AI_MODEL=qwen2.5-vl:3b
+   # (Opcional) Webhook para disparar chamados ao seu sistema de Help Desk
+   # WEBHOOK_HELPDESK_URL=https://seu-helpdesk.com/api/v2/webhooks
    ```
-4. **(Opcional) Para rodar o Qwen Localmente sem limites de cota:**
-   - Instale o [Ollama](https://ollama.com/) no seu computador.
-   - Baixe e execute o modelo de visão Qwen:
-     ```bash
-     ollama run qwen2.5-vl:3b
-     ```
-   - No `.env`, defina `AI_PROVIDER=local` (ou deixe `auto` para detecção automática).
+   > *Nota: Você pode obter uma chave gratuita no [Google AI Studio](https://aistudio.google.com/). O plano gratuito permite até 1.500 requisições diárias sem cartão de crédito.*
+
 5. Inicie o servidor:
    ```bash
    npm run dev
    ```
-   *(Ou `npm.cmd run dev` no Windows PowerShell)*
-
-Você verá a confirmação no terminal:
-```text
-====================================================
-🚀 Servidor Tradutor de Burocracia rodando na porta 3001
-🤖 Provedor de IA configurado: [AUTO]
-🛡️  Segurança: Helmet, Rate-Limit, CORS e Magic-Bytes ativados
-🔒 LGPD: Armazenamento exclusivo em memória RAM (sem disco)
-🔗 Health Check: http://localhost:3001/api/health
-====================================================
-```
 
 ---
 
-### Passo 4: Configurar e Rodar o Frontend
+### Passo 3: Configurar e Iniciar o Frontend
 
-1. Abra um **segundo terminal** e entre na pasta `frontend`:
+1. Em outro terminal, entre na pasta `frontend`:
    ```bash
    cd frontend
    ```
@@ -216,157 +234,54 @@ Você verá a confirmação no terminal:
    ```bash
    npm install
    ```
-   *(Ou `npm.cmd install` no Windows PowerShell)*
-3. Inicie a interface:
+3. Inicie o servidor de desenvolvimento:
    ```bash
    npm run dev
    ```
-   *(Ou `npm.cmd run dev` no Windows PowerShell)*
-4. Abra seu navegador no endereço:
+4. Acesse a aplicação no seu navegador:  
    👉 **`http://localhost:5173`**
 
 ---
 
-## 🦙 Como Rodar o Modelo Local (Qwen2.5-VL via Ollama)
+### 🧪 Executando os Testes Automatizados
 
-Se você deseja rodar a Inteligência Artificial **100% no seu computador**, sem limites de requisições por minuto e com privacidade absoluta (as fotos dos documentos nunca saem da sua máquina):
+O projeto conta com suíte completa de testes unitários determinísticos e testes de benchmark:
 
-### Passo a Passo:
-
-1. **Instale o Ollama:**
-   - Baixe e instale o [Ollama para Windows](https://ollama.com/download/windows) (ou Mac/Linux).
-2. **Baixe e execute o Qwen de Visão:**
-   - Abra o terminal e rode:
-     ```bash
-     ollama run qwen2.5-vl:3b
-     ```
-   - *(Ele fará o download do modelo Qwen2.5-VL de 3 bilhões de parâmetros, que tem ótimo equilíbrio entre velocidade e leitura em português).*
-3. **Detecção Automática:**
-   - No arquivo `backend/.env`, se estiver com `AI_PROVIDER=auto`, o backend detectará o modelo local automaticamente ao ser iniciado!
-   - Se preferir forçar 100% local, defina `AI_PROVIDER=local`.
-4. **Inicie o Backend:**
-   - Ao rodar `node server.js` ou `npm run dev`, o backend carregará a IA local e processará os documentos sem consumir cotas da nuvem.
-
----
-
-## 💡 Dica para Usuários Windows (PowerShell)
-
-Se ao executar comandos `npm` você receber a mensagem de erro:
-> *"O arquivo npm.ps1 não pode ser carregado porque a execução de scripts foi desabilitada..."*
-
-Você pode resolver de duas formas:
-- **Forma rápida:** Adicione `.cmd` após o comando:
-  ```powershell
-  npm.cmd install
-  npm.cmd run dev
-  ```
-- **Forma definitiva:** Libere a execução de scripts no PowerShell executando:
-  ```powershell
-  Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-  ```
-
----
-
-## 🔒 Segurança, Privacidade e LGPD (Lei Geral de Proteção de Dados)
-
-Como a aplicação processa documentos do cotidiano que frequentemente contêm **dados de saúde** (receitas médicas, laudos, exames) e **documentos judiciais/oficiais** (intimações, citações, notificações), estes são classificados como **dados pessoais sensíveis** pela LGPD (**Lei Federal nº 13.709/2018, Art. 5º, II**).
-
-Por isso, o projeto implementa uma arquitetura orientada à privacidade por design (*privacy by design*) com total transparência para o cidadão:
-
-### 1. O que acontece no Servidor Local da Aplicação?
-- **Processamento Exclusivo em Memória RAM:** O backend utiliza `multer.memoryStorage()`. As imagens e arquivos PDF recebidos são mantidos estritamente na memória volátil durante a requisição e são descartados imediatamente após a geração da resposta.
-- **Zero Persistência em Disco:** O servidor não salva arquivos de imagem no sistema operacional e não possui banco de dados com fotos ou dados de cidadãos.
-- **Logs Sanitizados e Seguros:** Nomes de arquivos pessoais, conteúdos extraídos de documentos (OCR), perguntas de cidadãos e respostas da IA **nunca** são registrados em logs de produção, prevenindo vazamentos acidentais de diagnósticos ou informações processuais.
-
-### 2. Para onde vão os dados? (Envio para a IA de Terceiros - Google Gemini)
-Para realizar a leitura de caligrafias difíceis e a tradução de termos técnicos, a imagem/PDF é convertida em Base64 e enviada via conexão criptografada (HTTPS) para a API do **Google Gemini**.
-
-> [!WARNING]  
-> **Diferença Crítica entre o Plano Gratuito (Free Tier) e o Plano Pago do Google Gemini:**
-> - **No Free Tier (Google AI Studio gratuito):** De acordo com os [Termos de Serviço Adicionais do Google AI Studio](https://ai.google.dev/terms), o Google **pode armazenar e utilizar as entradas (prompts, fotos enviadas) e respostas geradas para treinar, aprimorar e refinar seus modelos e produtos de IA**, inclusive com amostragem revisada por humanos com anonimização prévia. **Para documentos contendo dados de saúde e judiciais sensíveis, isso representa um ponto de atenção real de privacidade.**
-> - **No Plano Pago / Corporativo (Google Cloud Vertex AI ou Pay-As-You-Go com Faturamento):** Os dados do cliente **NÃO são utilizados para treinar modelos do Google** e não são retidos além do processamento operacional estritamente contratado.
-> - **Recomendação para Produção/Órgãos Públicos:** Em implantações reais e governamentais que atendam cidadãos, é mandatória a utilização de chaves vinculadas ao plano corporativo com faturamento ativo do Google Cloud ou modelos locais/privados em nuvem soberana.
-
-### 3. Consentimento Explícito do Cidadão (Art. 7º e Art. 11 da LGPD)
-- **Modal Prévio ao Upload:** A interface web exibe uma tela explicativa em linguagem simples e acolhedora antes do primeiro envio de qualquer documento.
-- **Escolha Informada:** O cidadão é informado com clareza de que o documento será lido por uma Inteligência Artificial externa e tem a opção de consentir explicitamente ou utilizar o recurso de **"Ver Exemplo Pronto"** para conhecer a ferramenta sem precisar enviar nenhum documento pessoal real.
-
-### 4. Proteções Técnicas Adicionais da API Backend
-- **Proteção contra Abuso (Rate Limiting):** Implementação de limites de requisições por IP com `express-rate-limit` (limite geral de 120 req/15 min e limite restrito de 30 req/15 min para rotas que consom a IA), evitando exaustão de cotas e ataques de negação de serviço (DoS).
-- **Cabeçalhos de Segurança HTTP (`helmet`):** Inclusão de proteção contra ataques clássicos de web (clickjacking, MIME-sniffing, etc.).
-- **Validação Rigorosa de Tipos MIME por Magic Bytes:** Não confia apenas na extensão (`.jpg`, `.pdf`) ou no cabeçalho `Content-Type` enviado pelo cliente. O backend inspeciona a assinatura binária real (hexadecimal) nos primeiros bytes de cada arquivo em memória (`FF D8 FF` para JPEG, `%PDF` para PDF, `89 50 4E 47` para PNG e `RIFF/WEBP` para WebP), bloqueando tentativas de envio de executáveis ou arquivos forjados.
-- **CORS Restrito:** Acesso restrito aos domínios autorizados do frontend (configurável via variável `CORS_ORIGIN`), bloqueando chamadas abusivas a partir de páginas terceiras não autorizadas.
-- **Limite Estrito de Tamanho:** Upload limitado a 10MB por arquivo e máximo de 4 páginas por requisição.
-
-### 5. Isenção de Responsabilidade Profissional
-- A aplicação deixa explícito na interface (tanto na tela inicial quanto nos resultados) que o sistema é uma **ferramenta de apoio educacional e de acessibilidade e NÃO substitui a orientação de profissionais qualificados** (médicos, farmacêuticos, advogados, defensores públicos ou atendentes oficiais de concessionárias de serviços públicos).
-
----
-
-## 🧪 Mitigação de Riscos Críticos e Suíte de Avaliação (Benchmark)
-
-O maior risco ao aplicar IA em dados de cidadãos vulneráveis é a ocorrência de **alucinações em pontos críticos**, como **dosagem de medicamentos, valores a pagar e prazos judiciais**. Para blindar o sistema contra esses riscos, foram adotadas as seguintes defesas arquiteturais:
-
-### 1. Structured Output Nativo do Gemini
-Em vez de depender de instruções livres em linguagem natural pedindo JSON, a aplicação utiliza os parâmetros oficiais do SDK do Google GenAI:
-- `responseMimeType: "application/json"`
-- `responseSchema: DOCUMENT_RESPONSE_SCHEMA` (OpenAPI Spec nativo)
-
-Isso força a camada de inferência do modelo a seguir estritamente o grafo tipado, reduzindo drasticamente erros de sintaxe ou omissões de campos.
-
-### 2. Validação Rigorosa de Payload com Zod e Retry Automático
-Mesmo com structured outputs, o backend submete a resposta a um validador de schema com **Zod** (`documentSchema.safeParse`):
-- Se o JSON for malformado ou violar tipos e restrições mínimas, o backend descarta a resposta e aciona um **retry automático com o próximo modelo estável da lista resiliente**.
-
-### 3. Tratamento de Documentos Ilegíveis (`confianca: "baixa"`)
-O schema exige que a IA avalie a nitidez da imagem em `confianca` (`alta`, `media` ou `baixa`).
-- Se a foto estiver borrada, escura ou cortada, o frontend exibe em destaque um alerta preventivo:  
-  *"⚠️ Não consegui ler bem algumas partes deste papel. Para evitar erros graves com valores, remédios ou prazos, recomendamos tirar outra foto com mais iluminação."*
-
-### 4. Tratamento de Imagens Fora do Escopo (`categoria: "FORA_DE_ESCOPO"`)
-Se o usuário enviar selfies, memes, animais, paisagens ou documentos estrangeiros desconexos, a IA classifica como fora de escopo e a interface exibe uma orientação amigável e acolhedora em vez de quebrar ou alucinar uma conta pública inexistente.
-
-### 5. Regra Ultraconservadora para Receitas Médicas
-- A IA é categoricamente proibida de "adivinhar" nomes de medicamentos ou dosagens rasuradas/ilegíveis.
-- O sistema transcreve estritamente o que foi identificado com 100% de clareza e registra explicitamente *"Trecho ilegível no papel — confirme obrigatoriamente com o médico ou farmacêutico"* caso haja qualquer incerteza.
-
-### 6. Destaque Visual com Aviso de Conferência
-Valores monetários e prazos de vencimento são apresentados acompanhados de um banner de checagem obrigatório para o cidadão validar com seus próprios olhos:  
-*"⚠️ Confira sempre no papel original: R$ 142,50 até 25/10/2024"*.
-
-### 7. Modelo Ativo e Arquitetura Resiliente de Fallback
-Para garantir máxima velocidade, acurácia em receitas médicas e disponibilidade constante, o projeto adota o modelo multimodal **`gemini-2.5-flash`** como padrão ativo, configurável via variável `GEMINI_MODEL`.
-- O backend implementa uma **cadeia automática de fallback** (`gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-1.5-flash` → `gemini-2.5-pro`) com **timeout de 35s** por chamada.
-- Qualquer oscilação transitória do Google (500 INTERNAL, 502, 503 UNAVAILABLE ou 429 RESOURCE_EXHAUSTED) aciona imediatamente o próximo modelo resiliente sem quebrar a requisição do cidadão.
-
-### 8. Verificação Determinística por Módulo 10 e 11 (Código de Barras)
-Para eliminar qualquer possibilidade de alucinação em valores de contas e boletos:
-- O módulo `barcodeValidator.js` inspeciona a linha digitável transcrita.
-- Valida os dígitos verificadores (DVs) oficiais de boletos bancários (47 dígitos) e contas de concessionárias de água/luz (48 dígitos).
-- Quando autenticado, o valor calculado matematicamente prevalece e o frontend exibe o **Selo de Garantia Matemática**.
-
-### 9. Conjunto de Avaliação Contínua (26 Casos de Teste)
-Criada uma suíte automatizada de testes (`eval/dataset.js` e `eval/runEval.js`) contendo **26 documentos sintéticos e anonimizados** (contas públicas, receitas legíveis, receitas ilegíveis/rasuradas, notificações judiciais, benefícios sociais e memes fora de escopo).
-
-Para rodar a avaliação antes de qualquer mudança de prompt ou modelo:
 ```bash
+# Executa os 11 testes unitários (Boletos, Schemas de TI, Tickets e Auditoria)
 cd backend
-npm.cmd run test:eval -- --offline
-```
-*(Ou `npm run test:eval` para testar ao vivo contra a API do Google).*
+npm test
 
-### 9. Acessibilidade Universal e Conformidade WCAG 2.2 Nível AA
-A interface web foi desenhada sob as diretrizes de acessibilidade internacional **WCAG 2.2 Nível AA**, garantindo inclusão digital para idosos e pessoas com deficiência ou baixo letramento:
-- **Destaque Dinâmico de Leitura (Efeito Karaokê):** O reprodutor de áudio sincroniza a leitura por voz (`speechSynthesis`) com o texto na tela via eventos `boundary`, destacando visualmente a frase exata que está sendo lida.
-- **Modo Alto Contraste:** Botão dedicado no cabeçalho ativa instantaneamente o tema de alto contraste (fundo preto e tipografia amarela brilhante).
-- **Alvos de Toque Mínimos de 44x44px:** Todos os botões, opções de velocidade e cards respeitam a diretriz WCAG 2.5.8 de tamanho mínimo para evitar toques acidentais em telas sensíveis ao toque.
-- **Rótulos Duplos (Ícone + Texto):** Todos os botões principais utilizam ícone visual acompanhado de texto claro e descritivo (nunca ícones isolados).
-- **Compatibilidade com Leitores de Tela:** Atributos semânticos e regiões `aria-live="polite"` anunciam o progresso da análise e os resultados para softwares como TalkBack, NVDA e VoiceOver.
-- **Respeito a `prefers-reduced-motion`:** Usuários com sensibilidade a animações têm transições atenuadas automaticamente pelo CSS.
-- **Linguagem Acessível (~5º Ano):** O mediador social com IA gera textos com frases curtas (máximo de 15 a 18 palavras) em voz ativa direta, eliminando barreiras de compreensão.
+# Executa o benchmark de acurácia de IA (26 casos sintéticos)
+npm run test:eval -- --offline
+```
 
 ---
 
-## 🤝 Projeto de Extensão Universitária
+## 🦙 Execução 100% Local com Qwen2.5-VL (Ollama)
 
-Este projeto foi concebido como uma iniciativa acadêmica de extensão para democratizar o acesso à informação e apoiar cidadãos em vulnerabilidade informacional através do uso consciente de Inteligência Artificial generativa.
+Caso queira executar a inteligência artificial de forma soberana, sem conexão externa e sem envio de dados para a nuvem:
+
+1. Instale o [Ollama](https://ollama.com/).
+2. Baixe o modelo de visão multimodal:
+   ```bash
+   ollama run qwen2.5-vl:3b
+   ```
+3. No arquivo `backend/.env`, configure `AI_PROVIDER=local` (ou deixe `auto` para detecção automática).
+4. O backend identificará o servidor local na porta `11434` e processará imagens localmente.
+
+---
+
+## 🔒 Segurança, Privacidade e LGPD
+
+* **Processamento Estrito em RAM:** Uploads utilizam `multer.memoryStorage()`. Imagens são processadas exclusivamente na memória volátil e descartadas logo após a inferência.
+* **Zero Persistência de Dados Sensíveis:** O servidor não grava imagens em disco nem armazena dados de receitas médicas ou faturas de clientes.
+* **Logs Sanitizados:** Detalhes de documentos e textos de dúvidas nunca são impressos no console em ambiente de produção.
+* **Validação por Magic Bytes:** Proteção contra arquivos forjados através da leitura dos bytes binários dos arquivos (`FF D8 FF` para JPEG, `%PDF` para PDF, `89 50 4E 47` para PNG, `RIFF` para WebP).
+* **Proteção contra Abuso:** Rate limiting duplo via `express-rate-limit` (limite geral de 120 req/15min e limite estrito de 30 req/15min para IA).
+
+---
+
+## 🤝 Licença e Compromisso Social
+
+Projeto desenvolvido sob princípios de software livre e inclusão digital, com o objetivo de tornar a tecnologia e a burocracia do dia a dia acessíveis para todas as idades e níveis de letramento.

@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import { analyzeDocumentImages, answerDocumentQuestion, getAiProviderInfo } from './services/aiProvider.js';
 import { detectMimeFromMagicBytes, ALLOWED_MIME_TYPES } from './utils/fileValidation.js';
 import { safeLog } from './utils/logger.js';
-import { askQuestionSchema } from './schemas/documentSchema.js';
+import { askQuestionSchema, createTicketSchema } from './schemas/documentSchema.js';
 
 dotenv.config();
 
@@ -190,9 +190,18 @@ app.post(
         `Recebido(s) ${validFiles.length} arquivo(s) para análise [${(totalBytes / 1024).toFixed(1)} KB total]`
       );
 
+      const startedAt = Date.now();
       const analysis = await analyzeDocumentImages({
         files: validFiles
       });
+      const processingMs = Date.now() - startedAt;
+
+      analysis.meta = {
+        ...(analysis.meta || {}),
+        tempoProcessamentoMs: processingMs,
+        bytesRecebidos: totalBytes,
+        arquivos: validFiles.length
+      };
 
       // LGPD: Registra apenas o tipo genérico de documento processado
       safeLog.info(
@@ -284,6 +293,105 @@ app.post('/api/ask-question', aiLimiter, async (req, res) => {
         : friendlyError
     });
   }
+});
+
+// Armazenamento em memória RAM de tickets recentes (LGPD: sem persistência em disco)
+const supportTickets = new Map();
+const MAX_STORED_TICKETS = 50;
+
+// Endpoint: Abertura e integração de tickets com Help Desk / CRM
+app.post('/api/tickets/create', async (req, res) => {
+  try {
+    const parseResult = createTicketSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const issues = parseResult.error.issues || parseResult.error.errors || [];
+      const errorMsg = issues.length > 0
+        ? issues.map((e) => e.message).join(', ')
+        : 'Dados inválidos para abertura do chamado';
+      return res.status(400).json({ success: false, error: errorMsg });
+    }
+
+    const {
+      nomeCliente,
+      contato,
+      tipoProblema,
+      diagnosticoTecnico,
+      resumoSimples,
+      etapasTentadas,
+      observacoes
+    } = parseResult.data;
+
+    // Gera protocolo amigável e legível para o cidadão
+    const ano = new Date().getFullYear();
+    const aleatorio = Math.floor(1000 + Math.random() * 9000);
+    const protocolo = parseResult.data.protocolo || `SUP-${ano}-${aleatorio}`;
+
+    const ticket = {
+      protocolo,
+      nomeCliente,
+      contato,
+      tipoProblema,
+      diagnosticoTecnico: diagnosticoTecnico || null,
+      resumoSimples: resumoSimples || '',
+      etapasTentadas: etapasTentadas || [],
+      observacoes: observacoes || '',
+      status: 'aberto',
+      criadoEm: new Date().toISOString()
+    };
+
+    // Salva na memória RAM rotativa
+    supportTickets.set(protocolo, ticket);
+    if (supportTickets.size > MAX_STORED_TICKETS) {
+      const oldestKey = supportTickets.keys().next().value;
+      supportTickets.delete(oldestKey);
+    }
+
+    safeLog.info(`Novo ticket de suporte aberto com sucesso. Protocolo: ${protocolo}`);
+
+    // Integração assíncrona com Webhook de Help Desk (Zendesk, GLPI, Freshdesk, Chatwoot, etc.) se configurado
+    if (process.env.WEBHOOK_HELPDESK_URL) {
+      fetch(process.env.WEBHOOK_HELPDESK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'ticket.created',
+          ticket
+        })
+      }).catch((webhookErr) => {
+        safeLog.warn(`Falha ao despachar webhook de helpdesk: ${webhookErr.message}`);
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      ticket
+    });
+  } catch (err) {
+    safeLog.error('Erro ao registrar chamado de suporte:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno ao registrar o chamado. Por favor, tente novamente.'
+    });
+  }
+});
+
+// Endpoint: Consulta de ticket por protocolo
+app.get('/api/tickets/:protocolo', (req, res) => {
+  const { protocolo } = req.params;
+  const ticket = supportTickets.get(protocolo);
+  if (!ticket) {
+    return res.status(404).json({
+      success: false,
+      error: 'Chamado não localizado com o protocolo informado.'
+    });
+  }
+  return res.json({ success: true, ticket });
+});
+
+// Endpoint: Listagem de tickets recentes para o painel do técnico
+app.get('/api/tickets', (req, res) => {
+  const tickets = Array.from(supportTickets.values()).reverse();
+  return res.json({ success: true, tickets });
 });
 
 // Tratamento de erros do multer e middlewares
