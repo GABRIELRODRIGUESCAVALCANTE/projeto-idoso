@@ -84,6 +84,25 @@ graph TD
 
 ---
 
+## 🦷 Modo Saúde (Clínicas Odontológicas e Postos de Saúde)
+
+Versão focada para apresentações e uso em **clínicas odontológicas** e **Unidades Básicas de Saúde (UBS)**. Esconde as telas de suporte de TI/Help Desk e destaca apenas o que importa para pacientes, cuidadores e profissionais de saúde.
+
+**Como ativar:**
+* Abra a aplicação com `?modo=saude` na URL (ex: `http://localhost:5173/?modo=saude`). A escolha fica salva no navegador; use `?modo=completo` para voltar.
+* Ou gere o build já no Modo Saúde com `VITE_APP_MODE=saude npm run build`.
+
+**O que muda:**
+* **Exemplos prontos (funcionam sem internet):** cuidados após extração de dente, receita do dentista, cuidados com a dentadura, pedido de exame com preparo, resultado de exame (sem diagnóstico), caderneta de vacinação do idoso, receita médica e SMS falso de agendamento do SUS.
+* **Sinais de Alerta:** caixa destacada com os sinais que exigem procurar a unidade, o dentista ou o SAMU, com botão para ligar **192**.
+* **Imprimir em letra grande:** gera uma folha simplificada (com espaço para anotações do profissional) para entregar ao paciente.
+* **Letra grande por padrão (130%)**, sem painel técnico, abertura de chamados ou métricas de engenharia.
+* **IA com postura ultraconservadora:** novas categorias (`ODONTOLOGIA`, `ORIENTACAO_POS_PROCEDIMENTO`, `PEDIDO_EXAME`, `RESULTADO_EXAME`, `VACINACAO`) e regras explícitas para nunca diagnosticar, nunca interpretar exames como "normal/alterado" e nunca sugerir troca de remédios.
+
+> ⚠️ **Dados de saúde são dados sensíveis (LGPD, art. 11).** Em apresentações, use apenas documentos fictícios. No plano gratuito da API do Gemini, o Google pode usar o conteúdo enviado para melhorar seus produtos; para uso real com pacientes, prefira a execução local (Qwen/Ollama) ou um plano pago.
+
+---
+
 ## 🛠️ Tecnologias Utilizadas
 
 ### Backend (API REST)
@@ -248,7 +267,7 @@ cd projeto-idoso
 O projeto conta com suíte completa de testes unitários determinísticos e testes de benchmark:
 
 ```bash
-# Executa os 11 testes unitários (Boletos, Schemas de TI, Tickets e Auditoria)
+# Executa os testes unitários (Boletos, Schemas de TI, Tickets e Auditoria)
 cd backend
 npm test
 

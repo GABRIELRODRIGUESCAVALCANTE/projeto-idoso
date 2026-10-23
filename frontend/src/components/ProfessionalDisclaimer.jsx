@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Stethoscope, Scale, ShieldCheck } from 'lucide-react';
 
-export default function ProfessionalDisclaimer({ className = '' }) {
+export default function ProfessionalDisclaimer({ className = '', healthMode = false }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -38,23 +38,27 @@ export default function ProfessionalDisclaimer({ className = '' }) {
           <div className="flex items-start gap-2">
             <Stethoscope className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
             <p>
-              <strong>Em documentos de saúde (receitas e exames):</strong> Nunca inicie, altere dosagens ou interrompa medicamentos por conta própria. Consulte sempre o seu <strong>médico</strong> ou esclareça dúvidas com o <strong>farmacêutico</strong> no balcão da farmácia ou posto de saúde (SUS).
+              <strong>Em documentos de saúde (receitas, exames e orientações do dentista):</strong> O aplicativo não faz diagnóstico e não interpreta resultados de exames. Nunca inicie, altere dosagens ou interrompa medicamentos por conta própria. Consulte sempre o seu <strong>médico</strong> ou <strong>dentista</strong>, ou esclareça dúvidas com o <strong>farmacêutico</strong> no balcão da farmácia ou posto de saúde (SUS). Em emergência, ligue <strong>192 (SAMU)</strong>.
             </p>
           </div>
 
+          {!healthMode && (
           <div className="flex items-start gap-2">
             <Scale className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
             <p>
               <strong>Em notificações judiciais ou multas:</strong> Não tome decisões processuais sem assistência jurídica. Procure a <strong>Defensoria Pública do seu Estado</strong>, um <strong>advogado</strong> ou o balcão de atendimento do tribunal competente.
             </p>
           </div>
+          )}
 
+          {!healthMode && (
           <div className="flex items-start gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
             <p>
               Em caso de cobranças indevidas de serviços essenciais (luz, água, gás), faça contato direto com o canal oficial de atendimento ao cliente (0800) da concessionária ou com o PROCON.
             </p>
           </div>
+          )}
         </div>
       )}
     </div>

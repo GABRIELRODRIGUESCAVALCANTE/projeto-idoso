@@ -19,9 +19,9 @@ import {
   Monitor
 } from 'lucide-react';
 import { compressImageIfNeeded } from '../utils/imageCompressor';
-import { DEMO_PRESETS } from '../utils/demoData';
+import { DEMO_PRESETS, HEALTH_DEMO_KEYS } from '../utils/demoData';
 
-export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onRequestConsent, onSelectDemo }) {
+export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onRequestConsent, onSelectDemo, healthMode = false }) {
   // Estados para suportar Frente e Verso ou arquivo PDF único
   const [frontFile, setFrontFile] = useState(null);
   const [frontPreview, setFrontPreview] = useState(null);
@@ -236,7 +236,9 @@ export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onR
           <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200/80 flex items-start gap-3">
             <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">
-              <strong>Dica importante:</strong> Se o seu documento tem informações atrás (como instruções de remédio ou código de barras no verso da conta), você poderá adicionar o <strong>verso</strong> logo em seguida!
+              <strong>Dica importante:</strong> {healthMode
+                ? <>Se a receita ou a folha de orientações tem informações atrás, você poderá adicionar o <strong>verso</strong> logo em seguida! Para apresentações, use documentos de exemplo, nunca de pacientes reais.</>
+                : <>Se o seu documento tem informações atrás (como instruções de remédio ou código de barras no verso da conta), você poderá adicionar o <strong>verso</strong> logo em seguida!</>}
             </p>
           </div>
 
@@ -252,6 +254,38 @@ export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onR
                   Ideal para apresentações sem foto
                 </span>
               </div>
+              {healthMode ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {HEALTH_DEMO_KEYS.map((key, index) => {
+                  const preset = DEMO_PRESETS[key];
+                  const isScam = preset.categoria === 'ALERTA_GOLPE_SUSPEITO';
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => onSelectDemo(key)}
+                      className={`p-3 rounded-xl border text-left transition-all group focus-visible:ring-4 ${
+                        isScam
+                          ? 'border-rose-300 bg-rose-50/80 hover:bg-rose-100 focus-visible:ring-rose-500'
+                          : 'border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 focus-visible:ring-emerald-500'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        {isScam
+                          ? <ShieldAlert className="w-4 h-4 text-rose-600" />
+                          : <Pill className="w-4 h-4 text-emerald-600" />}
+                        <span className={`font-extrabold text-sm ${isScam ? 'text-rose-950' : 'text-emerald-950'}`}>
+                          {index + 1}. {preset.titulo}
+                        </span>
+                      </div>
+                      <p className={`text-xs line-clamp-2 ${isScam ? 'text-rose-900' : 'text-emerald-900'}`}>
+                        {preset.descricao}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+              ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <button
                   type="button"
@@ -337,6 +371,7 @@ export default function DocumentUploader({ onAnalyze, isLoading, hasConsent, onR
                   </p>
                 </button>
               </div>
+              )}
             </div>
           )}
         </div>

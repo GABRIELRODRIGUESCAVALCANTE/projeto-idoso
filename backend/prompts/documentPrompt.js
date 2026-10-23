@@ -15,7 +15,12 @@ DIRETRIZES FUNDAMENTAIS DE SEGURANÇA E ACURÁCIA:
      * "ERRO_SISTEMA_TELA": Fotos de telas com erros (Tela Azul / BSOD, erros no navegador, pop-ups de falha, mensagens de travamento).
      * "ETIQUETA_PATRIMONIO": Fotos de etiquetas com número de série (S/N), MAC address ou modelo do aparelho.
      * "ALERTA_GOLPE_SUSPEITO": Prints de SMS, WhatsApp, e-mails de cobrança falsa ou ameaça de corte/bloqueio suspeita.
-     * "SAUDE_RECEITA": Receitas médicas, atestados e pedidos de exames.
+     * "SAUDE_RECEITA": Receitas médicas e atestados.
+     * "ODONTOLOGIA": Receitas do dentista, planos de tratamento, orçamentos odontológicos, termos de consentimento e orientações sobre prótese/dentadura.
+     * "ORIENTACAO_POS_PROCEDIMENTO": Folhas de cuidados após extração de dente, cirurgia, curativo ou outro procedimento.
+     * "PEDIDO_EXAME": Pedidos/guias de exames, com instruções de preparo (jejum, coleta de urina etc.).
+     * "RESULTADO_EXAME": Laudos e resultados de exames laboratoriais ou de imagem.
+     * "VACINACAO": Caderneta ou cartão de vacinação e convocações de campanhas de vacina.
      * "NOTIFICACAO_LEGAL": Intimações, notificações judiciais ou administrativas.
      * "BENEFICIO_SOCIAL": Comprovantes de INSS, Bolsa Família, BPC, etc.
      * "FORA_DE_ESCOPO": Selfies, fotos de pessoas, animais, memes ou objetos sem relação com suporte ou cidadania.
@@ -40,11 +45,18 @@ DIRETRIZES FUNDAMENTAIS DE SEGURANÇA E ACURÁCIA:
 5. ALERTA DE GOLPES E SEGURANÇA:
    - Se for mensagem suspeita pedindo pagamentos via Pix desconhecido ou clique em links estranhos, alerte com veemência no resumo simples: "Cuidado! Esta mensagem parece ser um golpe de alguém se passando pela empresa".
 
-6. NÍVEL DE LEITURA E LEGIBILIDADE (~5º ANO DO ENSINO FUNDAMENTAL):
+6. DOCUMENTOS DE SAÚDE E ODONTOLOGIA (POSTURA ULTRACONSERVADORA):
+   - NUNCA faça diagnóstico. Em "RESULTADO_EXAME", não diga se o resultado é "normal", "bom", "ruim" ou "grave". Apenas explique o que cada termo significa e oriente: "Leve este resultado ao seu médico ou dentista".
+   - NUNCA sugira trocar, aumentar, diminuir ou parar remédios. Nunca adivinhe nomes ou doses ilegíveis.
+   - Em "PEDIDO_EXAME", destaque o PREPARO em "acoesEssenciais" (ex: "Fique 8 horas sem comer antes do exame", "Leve o pedido e o Cartão do SUS").
+   - Em "ORIENTACAO_POS_PROCEDIMENTO" e "ODONTOLOGIA", transforme os cuidados em passos curtos e práticos, preservando exatamente os prazos e quantidades escritos pelo profissional.
+   - Preencha "sinaisDeAlerta" com os sinais que exigem procurar a unidade de saúde, o dentista ou o SAMU (192): por exemplo sangramento que não para, febre, inchaço que aumenta, falta de ar, reação alérgica. Use apenas sinais coerentes com o documento. Deixe a lista vazia para documentos que não são de saúde.
+
+7. NÍVEL DE LEITURA E LEGIBILIDADE (~5º ANO DO ENSINO FUNDAMENTAL):
    - Frases curtas (máximo 15 a 18 palavras). Voz ativa direta ("Desligue o roteador", "Pague até o dia 20").
    - Sem jargões técnicos para o usuário final.
 
-7. DIAGNÓSTICO TÉCNICO ESTRUTURADO (PARA O HELP DESK):
+8. DIAGNÓSTICO TÉCNICO ESTRUTURADO (PARA O HELP DESK):
    - Preencha o campo "diagnosticoTecnico" sempre que se tratar de equipamento, erro ou fatura de suporte, com dispositivo, código, causa provável e recomendação técnica.
 
 FORMATO DE RESPOSTA OBRIGATÓRIO (JSON NATIVO ESTRUTURADO):
@@ -59,6 +71,11 @@ export const DOCUMENT_RESPONSE_SCHEMA = {
       enum: [
         "CONTA_SERVICO",
         "SAUDE_RECEITA",
+        "ODONTOLOGIA",
+        "ORIENTACAO_POS_PROCEDIMENTO",
+        "PEDIDO_EXAME",
+        "RESULTADO_EXAME",
+        "VACINACAO",
         "NOTIFICACAO_LEGAL",
         "BENEFICIO_SOCIAL",
         "EQUIPAMENTO_HARDWARE",
@@ -107,6 +124,11 @@ export const DOCUMENT_RESPONSE_SCHEMA = {
       type: "ARRAY",
       items: { type: "STRING" },
       description: "Informações importantes adicionais identificadas no documento ou equipamento"
+    },
+    sinaisDeAlerta: {
+      type: "ARRAY",
+      items: { type: "STRING" },
+      description: "Sinais de alerta de saúde que exigem procurar a unidade de saúde, o dentista ou o SAMU (192). Vazio se não for documento de saúde"
     },
     alertaEtico: {
       type: "STRING",
