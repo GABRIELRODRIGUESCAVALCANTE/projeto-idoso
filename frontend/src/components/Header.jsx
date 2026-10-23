@@ -7,7 +7,8 @@ export default function Header({
   fontSizeLevel,
   onOpenPrivacy,
   isHighContrast,
-  onToggleHighContrast
+  onToggleHighContrast,
+  healthMode = false
 }) {
   return (
     <header className="bg-white border-b border-slate-200 shadow-xs sticky top-0 z-30">
@@ -28,7 +29,9 @@ export default function Header({
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 font-medium">
-                Burocracia e Saúde explicados de forma simples e humana
+                {healthMode
+                  ? 'Receitas, exames e orientações de saúde com voz e letra grande'
+                  : 'Burocracia e Saúde explicados de forma simples e humana'}
               </p>
             </div>
           </div>

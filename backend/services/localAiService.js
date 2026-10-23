@@ -111,6 +111,7 @@ function normalizeDocumentData(raw) {
     linhaDigitavel: raw.linhaDigitavel || null,
     codigoBarrasInfo: null,
     pontosDeAtencao: Array.isArray(raw.pontosDeAtencao) ? raw.pontosDeAtencao : [],
+    sinaisDeAlerta: Array.isArray(raw.sinaisDeAlerta) ? raw.sinaisDeAlerta : [],
     alertaEtico: raw.alertaEtico || 'Sempre confira os dados originais no documento físico ou consulte o órgão emissor.',
     textoParaVoz: raw.textoParaVoz || raw.resumoSimples || 'Documento analisado com sucesso.',
     detalhesReceita: {
@@ -302,7 +303,7 @@ export async function analyzeDocumentImages(input) {
   const schemaContract = `
 Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
 {
-  "categoria": "CONTA_SERVICO" | "SAUDE_RECEITA" | "NOTIFICACAO_LEGAL" | "BENEFICIO_SOCIAL" | "FORA_DE_ESCOPO" | "OUTRO",
+  "categoria": "CONTA_SERVICO" | "SAUDE_RECEITA" | "ODONTOLOGIA" | "ORIENTACAO_POS_PROCEDIMENTO" | "PEDIDO_EXAME" | "RESULTADO_EXAME" | "VACINACAO" | "NOTIFICACAO_LEGAL" | "BENEFICIO_SOCIAL" | "EQUIPAMENTO_HARDWARE" | "ERRO_SISTEMA_TELA" | "ETIQUETA_PATRIMONIO" | "FATURA_TELECOM_TI" | "ALERTA_GOLPE_SUSPEITO" | "FORA_DE_ESCOPO" | "OUTRO",
   "tipoDocumento": "Nome claro do documento",
   "confianca": "alta" | "media" | "baixa",
   "resumoSimples": "Resumo simples em 2 a 3 frases",
@@ -314,6 +315,7 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura exata:
     "avisoConferencia": "Confira no papel: ..."
   },
   "pontosDeAtencao": [],
+  "sinaisDeAlerta": ["Sinais de saúde que exigem procurar a unidade ou o SAMU 192 (vazio se não for saúde)"],
   "alertaEtico": "Aviso de segurança e conferência",
   "textoParaVoz": "Texto caloroso para leitura em voz alta",
   "detalhesReceita": {

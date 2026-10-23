@@ -6,9 +6,50 @@ import ResultCard from './components/ResultCard';
 import ConsentModal from './components/ConsentModal';
 import ProfessionalDisclaimer from './components/ProfessionalDisclaimer';
 import { AlertCircle, HelpCircle, HeartHandshake, ShieldCheck, RotateCcw, PlayCircle } from 'lucide-react';
-import { DEMO_PRESETS } from './utils/demoData';
+import { DEMO_PRESETS, HEALTH_DEMO_KEYS } from './utils/demoData';
+import { getAppMode } from './utils/appMode';
+
+// Botões do banner de demonstração no modo completo
+const FULL_DEMO_BUTTONS = [
+  { key: 'conta_luz', label: '⚡ Conta de Luz', aria: 'Carregar exemplo de conta de luz', color: 'sky' },
+  { key: 'roteador_fibra', label: '📶 Roteador Fibra (LOS)', aria: 'Carregar exemplo de suporte técnico com roteador fibra', color: 'indigo' },
+  { key: 'tela_azul', label: '💻 Tela Azul (PC)', aria: 'Carregar exemplo de tela azul do Windows', color: 'blue' },
+  { key: 'golpe_falso_suporte', label: '🛑 Falso Suporte (SMS)', aria: 'Carregar exemplo de SMS de falso suporte', color: 'rose' },
+  { key: 'golpe_adulterado', label: '🚨 Golpe Boleto', aria: 'Carregar exemplo de golpe antifraude', color: 'rose' },
+  { key: 'receita_medica', label: '💊 Receita Médica', aria: 'Carregar exemplo de receita médica', color: 'emerald' }
+];
+
+// Botões do banner de demonstração no Modo Saúde (clínica odontológica e posto de saúde)
+const HEALTH_DEMO_EMOJIS = {
+  pos_extracao: '🦷',
+  receita_odontologica: '💊',
+  protese_dentaria: '😁',
+  pedido_exame: '🧪',
+  resultado_exame: '📋',
+  vacinacao_idoso: '💉',
+  receita_medica: '🩺',
+  golpe_sus: '🚨'
+};
+const HEALTH_DEMO_BUTTONS = HEALTH_DEMO_KEYS.map((key) => ({
+  key,
+  label: `${HEALTH_DEMO_EMOJIS[key] || '📄'} ${DEMO_PRESETS[key].titulo}`,
+  aria: `Carregar exemplo: ${DEMO_PRESETS[key].titulo}`,
+  color: key === 'golpe_sus' ? 'rose' : 'emerald'
+}));
+
+// Classes completas (Tailwind não gera classes montadas dinamicamente)
+const DEMO_BUTTON_COLORS = {
+  sky: 'bg-white hover:bg-sky-100 border-sky-300 text-sky-900',
+  indigo: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-300 text-indigo-900',
+  blue: 'bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-900',
+  rose: 'bg-rose-50 hover:bg-rose-100 border-rose-300 text-rose-900',
+  emerald: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900'
+};
 
 export default function App() {
+  const [appMode] = useState(getAppMode);
+  const healthMode = appMode === 'saude';
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -37,10 +78,12 @@ export default function App() {
   const [fontSizeLevel, setFontSizeLevel] = useState(() => {
     try {
       const saved = localStorage.getItem('app_font_size_level');
-      return saved !== null ? Math.min(3, Math.max(0, Number(saved))) : 0;
+      if (saved !== null) return Math.min(3, Math.max(0, Number(saved)));
     } catch {
-      return 0;
+      // Armazenamento indisponível: usa o padrão abaixo
     }
+    // No Modo Saúde o público é majoritariamente idoso: começa com letra grande (130%)
+    return healthMode ? 2 : 0;
   });
 
   const fontScales = ['100%', '115%', '130%', '145%'];
@@ -151,13 +194,15 @@ export default function App() {
   };
 
   // Carrega qualquer um dos presets de demonstração pré-auditados
-  const handleSelectDemo = (presetKey = 'conta_luz') => {
-    const demo = DEMO_PRESETS[presetKey] || DEMO_PRESETS.conta_luz;
+  const defaultDemoKey = healthMode ? HEALTH_DEMO_KEYS[0] : 'conta_luz';
+  const handleSelectDemo = (presetKey = defaultDemoKey) => {
+    const demo = DEMO_PRESETS[presetKey] || DEMO_PRESETS[defaultDemoKey];
     setResult(demo);
     setError(null);
   };
 
-  const loadDemo = () => handleSelectDemo('conta_luz');
+  const loadDemo = () => handleSelectDemo(defaultDemoKey);
+  const demoButtons = healthMode ? HEALTH_DEMO_BUTTONS : FULL_DEMO_BUTTONS;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
@@ -168,6 +213,7 @@ export default function App() {
         onOpenPrivacy={() => setIsConsentModalOpen(true)}
         isHighContrast={isHighContrast}
         onToggleHighContrast={() => setIsHighContrast((prev) => !prev)}
+        healthMode={healthMode}
       />
 
       <main
@@ -176,58 +222,28 @@ export default function App() {
         className="flex-1 max-w-4xl w-full mx-auto px-4 py-6 sm:py-8"
       >
         {/* Aviso Geral de Isenção de Responsabilidade Profissional */}
-        <ProfessionalDisclaimer className="mb-4" />
+        <ProfessionalDisclaimer className="mb-4" healthMode={healthMode} />
 
         {/* Banner de Demonstração Rápida */}
         {!result && !isLoading && (
           <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-sky-50 border border-sky-200 text-xs sm:text-sm text-sky-900">
             <span className="flex items-center gap-2 font-semibold">
               <PlayCircle className="w-5 h-5 text-sky-700 flex-shrink-0" />
-              Modo Demonstração (Pitch): Teste cenários sem câmera:
+              {healthMode
+                ? 'Exemplos de saúde (funcionam sem internet):'
+                : 'Modo Demonstração (Pitch): Teste cenários sem câmera:'}
             </span>
             <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                onClick={() => handleSelectDemo('conta_luz')}
-                aria-label="Carregar exemplo de conta de luz"
-                className="px-3 py-1.5 bg-white hover:bg-sky-100 font-extrabold rounded-xl border border-sky-300 text-sky-900 transition-all text-xs"
-              >
-                ⚡ Conta de Luz
-              </button>
-              <button
-                onClick={() => handleSelectDemo('roteador_fibra')}
-                aria-label="Carregar exemplo de suporte técnico com roteador fibra"
-                className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 font-extrabold rounded-xl border border-indigo-300 text-indigo-900 transition-all text-xs"
-              >
-                📶 Roteador Fibra (LOS)
-              </button>
-              <button
-                onClick={() => handleSelectDemo('tela_azul')}
-                aria-label="Carregar exemplo de tela azul do Windows"
-                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 font-extrabold rounded-xl border border-blue-300 text-blue-900 transition-all text-xs"
-              >
-                💻 Tela Azul (PC)
-              </button>
-              <button
-                onClick={() => handleSelectDemo('golpe_falso_suporte')}
-                aria-label="Carregar exemplo de SMS de falso suporte"
-                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 font-extrabold rounded-xl border border-rose-300 text-rose-900 transition-all text-xs"
-              >
-                🛑 Falso Suporte (SMS)
-              </button>
-              <button
-                onClick={() => handleSelectDemo('golpe_adulterado')}
-                aria-label="Carregar exemplo de golpe antifraude"
-                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 font-extrabold rounded-xl border border-rose-300 text-rose-900 transition-all text-xs"
-              >
-                🚨 Golpe Boleto
-              </button>
-              <button
-                onClick={() => handleSelectDemo('receita_medica')}
-                aria-label="Carregar exemplo de receita médica"
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 font-extrabold rounded-xl border border-emerald-300 text-emerald-900 transition-all text-xs"
-              >
-                💊 Receita Médica
-              </button>
+              {demoButtons.map((btn) => (
+                <button
+                  key={btn.key}
+                  onClick={() => handleSelectDemo(btn.key)}
+                  aria-label={btn.aria}
+                  className={`px-3 py-1.5 font-extrabold rounded-xl border transition-all text-xs ${DEMO_BUTTON_COLORS[btn.color]}`}
+                >
+                  {btn.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -265,6 +281,7 @@ export default function App() {
             hasConsent={hasConsent}
             onRequestConsent={handleRequestConsent}
             onSelectDemo={handleSelectDemo}
+            healthMode={healthMode}
           />
         )}
 
@@ -273,6 +290,7 @@ export default function App() {
             <ResultCard
               data={result}
               onReset={handleReset}
+              healthMode={healthMode}
             />
           </div>
         )}

@@ -28,7 +28,13 @@ import {
   Headset,
   Wrench,
   Terminal,
-  ExternalLink
+  ExternalLink,
+  Printer,
+  Smile,
+  ClipboardCheck,
+  TestTube,
+  ClipboardList,
+  Syringe
 } from 'lucide-react';
 import AudioPlayer from './AudioPlayer';
 import DocumentQA from './DocumentQA';
@@ -36,8 +42,11 @@ import ProfessionalDisclaimer from './ProfessionalDisclaimer';
 import MedicationPlan from './MedicationPlan';
 import TroubleshootingWizard from './TroubleshootingWizard';
 import OpenTicketModal from './OpenTicketModal';
+import HealthAlerts from './HealthAlerts';
+import { HEALTH_CATEGORIES } from '../utils/appMode';
+import { printLargeSheet } from '../utils/printSheet';
 
-export default function ResultCard({ data, onReset, fontSizeClass }) {
+export default function ResultCard({ data, onReset, fontSizeClass, healthMode = false }) {
   const [copiedBarcode, setCopiedBarcode] = useState(false);
   const [copiedTechJson, setCopiedTechJson] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
@@ -58,6 +67,7 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
     linhaDigitavel,
     codigoBarrasInfo,
     pontosDeAtencao = [],
+    sinaisDeAlerta = [],
     alertaEtico,
     textoParaVoz,
     detalhesReceita,
@@ -104,6 +114,36 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
           label: 'Documento de Saúde / Receita',
           bgColor: 'bg-rose-50 border-rose-200 text-rose-800'
         };
+      case 'ODONTOLOGIA':
+        return {
+          icon: <Smile className="w-5 h-5 text-teal-600" />,
+          label: 'Odontologia / Dentista',
+          bgColor: 'bg-teal-50 border-teal-200 text-teal-900'
+        };
+      case 'ORIENTACAO_POS_PROCEDIMENTO':
+        return {
+          icon: <ClipboardCheck className="w-5 h-5 text-teal-600" />,
+          label: 'Cuidados Após Procedimento',
+          bgColor: 'bg-teal-50 border-teal-200 text-teal-900'
+        };
+      case 'PEDIDO_EXAME':
+        return {
+          icon: <TestTube className="w-5 h-5 text-violet-600" />,
+          label: 'Pedido de Exame / Preparo',
+          bgColor: 'bg-violet-50 border-violet-200 text-violet-900'
+        };
+      case 'RESULTADO_EXAME':
+        return {
+          icon: <ClipboardList className="w-5 h-5 text-violet-600" />,
+          label: 'Resultado de Exame (sem diagnóstico)',
+          bgColor: 'bg-violet-50 border-violet-200 text-violet-900'
+        };
+      case 'VACINACAO':
+        return {
+          icon: <Syringe className="w-5 h-5 text-emerald-600" />,
+          label: 'Vacinação',
+          bgColor: 'bg-emerald-50 border-emerald-200 text-emerald-900'
+        };
       case 'CONTA_SERVICO':
         return {
           icon: <Zap className="w-5 h-5 text-amber-600" />,
@@ -140,7 +180,18 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
   const categoryConfig = getCategoryConfig(categoria);
   const isOutOfScope = categoria === 'FORA_DE_ESCOPO';
   const isLowConfidence = confianca === 'baixa';
-  const isMedical = categoria === 'SAUDE_RECEITA';
+  const hasMedications = Boolean(
+    detalhesReceita?.possuiTrechoIlegivel || detalhesReceita?.medicamentosIdentificados?.length
+  );
+  const isMedical = categoria === 'SAUDE_RECEITA' || (HEALTH_CATEGORIES.includes(categoria) && hasMedications);
+  const isHealthDocument = HEALTH_CATEGORIES.includes(categoria) || sinaisDeAlerta.length > 0;
+
+  const handlePrintSheet = () => {
+    const opened = printLargeSheet(data);
+    if (!opened) {
+      window.alert('O navegador bloqueou a janela de impressão. Permita pop-ups para este site e tente novamente.');
+    }
+  };
 
   // Copia a linha digitável limpa para a área de transferência
   const handleCopyBarcode = () => {
@@ -173,6 +224,12 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
     if (acoesEssenciais.length > 0) {
       linhas.push('\n✅ *O que fazer:*');
       acoesEssenciais.forEach((a, idx) => linhas.push(`${idx + 1}. ${a}`));
+    }
+
+    if (sinaisDeAlerta.length > 0) {
+      linhas.push('\n🚑 *Procure atendimento se acontecer:*');
+      sinaisDeAlerta.forEach((sinal) => linhas.push(`• ${sinal}`));
+      linhas.push('Emergência: ligue 192 (SAMU).');
     }
 
     linhas.push('\nExplicado com o app inclusivo Tradutor Cidadão.');
@@ -285,8 +342,21 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
                   <span>Enviar no WhatsApp</span>
                 </button>
 
+                {/* Folha em letra grande para o profissional imprimir e entregar ao paciente */}
+                {isHealthDocument && (
+                  <button
+                    type="button"
+                    onClick={handlePrintSheet}
+                    aria-label="Imprimir estas orientações em letra grande"
+                    className="min-h-[36px] px-3 py-1 rounded-full bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-300 text-xs font-extrabold inline-flex items-center gap-1.5 transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-sky-500"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-sky-700" />
+                    <span>Imprimir em letra grande</span>
+                  </button>
+                )}
+
                 {/* Alternador Visão do Técnico (N2) */}
-                {isTechSupportCategory && (
+                {isTechSupportCategory && !healthMode && (
                   <button
                     type="button"
                     onClick={() => setShowTechView((prev) => !prev)}
@@ -392,15 +462,18 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
           {/* 1. O QUE SIGNIFICA (Linguagem Humana e Direta) */}
           <div className="bg-sky-50/70 border-l-4 border-sky-500 rounded-2xl p-4 sm:p-5">
             <h3 className="text-xs sm:text-sm uppercase tracking-wider font-extrabold text-sky-900 mb-1.5 flex items-center gap-2">
-              <span>O que este documento ou aparelho diz:</span>
+              <span>{healthMode ? 'O que este documento diz:' : 'O que este documento ou aparelho diz:'}</span>
             </h3>
             <p className="text-slate-800 font-medium text-base sm:text-lg leading-relaxed">
               {resumoSimples}
             </p>
           </div>
 
-          {/* BARRA DE AÇÕES RÁPIDAS DE SUPORTE TÉCNICO */}
-          {acoesEssenciais.length > 0 && (
+          {/* 🚑 SINAIS DE ALERTA DE SAÚDE (quando procurar a unidade, o dentista ou o SAMU) */}
+          <HealthAlerts sinaisDeAlerta={sinaisDeAlerta} />
+
+          {/* BARRA DE AÇÕES RÁPIDAS DE SUPORTE TÉCNICO (oculta no Modo Saúde) */}
+          {acoesEssenciais.length > 0 && !healthMode && (
             <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-sky-50 border border-indigo-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
               <div>
                 <span className="text-xs font-extrabold uppercase text-indigo-900 block flex items-center gap-1.5">
@@ -433,7 +506,7 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
           )}
 
           {/* WIZARD DE TROUBLESHOOTING INTERATIVO */}
-          {showTroubleshooting && (
+          {showTroubleshooting && !healthMode && (
             <TroubleshootingWizard
               acoes={acoesEssenciais}
               diagnosticoTecnico={diagnosticoTecnico}
@@ -699,6 +772,7 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
           )}
 
           {/* 6. PAINEL DE MÉTRICAS DE ENGENHARIA (Destaque para apresentação em empresa tech) */}
+          {!healthMode && (
           <div className="pt-2 border-t border-slate-100">
             <button
               type="button"
@@ -741,6 +815,7 @@ export default function ResultCard({ data, onReset, fontSizeClass }) {
               </div>
             )}
           </div>
+          )}
 
           {/* 7. AVISO INSTITUCIONAL DE NÃO SUBSTITUIÇÃO DE PROFISSIONAIS (LGPD & ÉTICA) */}
           <ProfessionalDisclaimer className="mt-4" />

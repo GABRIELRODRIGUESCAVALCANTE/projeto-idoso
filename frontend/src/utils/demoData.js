@@ -314,5 +314,287 @@ export const DEMO_PRESETS = {
       bytesRecebidos: 310000,
       arquivos: 1
     }
+  },
+  // ===================== MODO SAÚDE: Clínica Odontológica & Posto de Saúde (UBS) =====================
+
+  pos_extracao: {
+    id: 'pos_extracao',
+    titulo: 'Cuidados Após Extração de Dente',
+    descricao: 'Folha de orientações do dentista explicada em passos simples',
+    tag: 'Odontologia',
+    categoria: 'ORIENTACAO_POS_PROCEDIMENTO',
+    tipoDocumento: 'Orientações Pós-Operatórias de Extração Dentária',
+    confianca: 'alta',
+    resumoSimples: 'Esta folha explica os cuidados para depois de tirar o dente. Seguir esses passos ajuda a parar o sangramento e evita infecção. O retorno para tirar os pontos é em 7 dias.',
+    acoesEssenciais: [
+      'Morda a gaze com firmeza por 30 minutos, sem ficar trocando.',
+      'Nas primeiras 24 horas, não cuspa, não faça bochecho e não use canudo.',
+      'Coloque gelo enrolado em um pano no rosto, 20 minutos sim e 20 minutos não, no primeiro dia.',
+      'Coma alimentos frios ou mornos e pastosos, como sopa morna, purê, iogurte e vitamina.',
+      'Escove os outros dentes normalmente, com cuidado perto do local da extração.',
+      'Durma com a cabeça mais alta, usando dois travesseiros.',
+      'Volte ao dentista em 7 dias para tirar os pontos.'
+    ],
+    valoresEPrazos: {
+      valorPrincipal: 'Não se aplica',
+      dataVencimento: 'Retorno em 7 dias',
+      consequenciaAtraso: 'Não deixe de voltar: os pontos precisam ser retirados pelo dentista.',
+      avisoConferencia: 'Confira na folha original a data do retorno marcada pelo dentista.'
+    },
+    linhaDigitavel: null,
+    codigoBarrasInfo: null,
+    pontosDeAtencao: [
+      'Não fume e não beba bebida alcoólica por pelo menos 3 dias.',
+      'Evite comida quente, dura ou apimentada nos primeiros dias.',
+      'Um pouco de inchaço e de sangue na saliva no primeiro dia é esperado.'
+    ],
+    sinaisDeAlerta: [
+      'Sangramento forte que não para mesmo mordendo a gaze por 30 minutos.',
+      'Febre (temperatura acima de 38 °C).',
+      'Inchaço que continua aumentando depois do 3º dia.',
+      'Dor forte que piora depois do 3º dia ou mau cheiro no local.',
+      'Dificuldade para engolir ou para respirar (procure a emergência ou ligue 192).'
+    ],
+    alertaEtico: 'Estas orientações reorganizam o que o dentista escreveu. Em caso de dúvida, ligue para a clínica.',
+    textoParaVoz: 'Olá! Esta folha explica os cuidados depois de tirar o dente. Morda a gaze com firmeza por trinta minutos. Hoje, não cuspa, não faça bochecho e não use canudo. Coloque gelo enrolado em um pano no rosto. Coma comidas frias ou mornas e pastosas. Durma com a cabeça mais alta. Volte ao dentista em sete dias para tirar os pontos. Se o sangramento não parar, se tiver febre ou se o inchaço aumentar depois do terceiro dia, procure a clínica.',
+    meta: { provedor: 'gemini', modelo: 'gemini-2.5-flash', tempoProcessamentoMs: 1390, bytesRecebidos: 301000, arquivos: 1 }
+  },
+
+  receita_odontologica: {
+    id: 'receita_odontologica',
+    titulo: 'Receita do Dentista',
+    descricao: 'Antibiótico, remédio para dor e enxaguante com horários',
+    tag: 'Odontologia',
+    categoria: 'ODONTOLOGIA',
+    tipoDocumento: 'Receita Odontológica',
+    confianca: 'alta',
+    resumoSimples: 'Esta é a receita do dentista com 3 remédios: um antibiótico contra infecção, um remédio para dor e um líquido para bochecho. O antibiótico deve ser tomado até o fim, mesmo que a dor passe.',
+    acoesEssenciais: [
+      'Tome a Amoxicilina de 8 em 8 horas, por 7 dias, até acabar o tratamento.',
+      'Tome a Dipirona somente se sentir dor, com intervalo mínimo de 6 horas.',
+      'Faça bochecho com a Clorexidina 2 vezes por dia, por 1 minuto, e cuspa. Não engula.',
+      'Antes de começar, avise o dentista se você tem alergia a penicilina ou a algum remédio.'
+    ],
+    valoresEPrazos: {
+      valorPrincipal: 'Não se aplica',
+      dataVencimento: 'Tratamento de 7 dias',
+      consequenciaAtraso: 'Parar o antibiótico antes do tempo pode fazer a infecção voltar.',
+      avisoConferencia: 'Confira as caixas e os miligramas com o farmacêutico antes de tomar.'
+    },
+    linhaDigitavel: null,
+    codigoBarrasInfo: null,
+    pontosDeAtencao: [
+      'A Clorexidina pode deixar os dentes um pouco manchados e mudar o gosto da comida. Isso passa depois do tratamento.',
+      'Espere 30 minutos depois de escovar os dentes para fazer o bochecho.'
+    ],
+    sinaisDeAlerta: [
+      'Manchas vermelhas ou coceira forte na pele depois de tomar o remédio.',
+      'Inchaço nos lábios, na língua ou no rosto.',
+      'Falta de ar ou chiado no peito: ligue 192 (SAMU) imediatamente.'
+    ],
+    alertaEtico: 'A IA apenas organiza a leitura da receita. Somente o dentista ou o farmacêutico podem orientar trocas de remédio.',
+    textoParaVoz: 'Olá! Esta é a receita do dentista. A Amoxicilina é um antibiótico: tome uma cápsula de oito em oito horas, por sete dias, até acabar, mesmo que a dor passe. A Dipirona é para dor: tome só se precisar, com intervalo de seis horas. A Clorexidina é para bochecho, duas vezes por dia, sem engolir. Se aparecerem manchas vermelhas na pele, inchaço no rosto ou falta de ar, ligue um nove dois.',
+    detalhesReceita: {
+      possuiTrechoIlegivel: false,
+      medicamentosIdentificados: [
+        { nome: 'Amoxicilina', dosagem: '500mg', instrucao: 'Tomar 1 cápsula de 8 em 8 horas por 7 dias.', legivel: true },
+        { nome: 'Dipirona', dosagem: '500mg', instrucao: 'Tomar 1 comprimido de 6 em 6 horas somente se houver dor.', legivel: true },
+        { nome: 'Digluconato de Clorexidina 0,12%', dosagem: '15 ml', instrucao: 'Bochechar por 1 minuto de 12 em 12 horas e cuspir. Não engolir.', legivel: true }
+      ]
+    },
+    meta: { provedor: 'gemini', modelo: 'gemini-2.5-flash', tempoProcessamentoMs: 1510, bytesRecebidos: 276000, arquivos: 1 }
+  },
+
+  protese_dentaria: {
+    id: 'protese_dentaria',
+    titulo: 'Cuidados com a Dentadura',
+    descricao: 'Higiene da prótese e da boca para o paciente idoso',
+    tag: 'Odontologia',
+    categoria: 'ODONTOLOGIA',
+    tipoDocumento: 'Orientações de Uso e Higiene de Prótese Dentária (Dentadura)',
+    confianca: 'alta',
+    resumoSimples: 'Esta folha ensina a limpar a dentadura e a cuidar da boca. Com a limpeza certa, a prótese dura mais e a gengiva fica saudável.',
+    acoesEssenciais: [
+      'Tire a dentadura e escove depois de cada refeição, com escova macia e sabão neutro ou de coco.',
+      'Não use pasta de dente na dentadura, porque ela risca a prótese.',
+      'Limpe também a gengiva, o céu da boca e a língua com escova macia ou gaze úmida.',
+      'Para dormir, tire a dentadura e deixe dentro de um copo com água limpa.',
+      'Nunca coloque a dentadura em água quente, porque ela pode entortar.',
+      'Vá ao dentista pelo menos 1 vez por ano, mesmo usando dentadura.'
+    ],
+    valoresEPrazos: {
+      valorPrincipal: 'Não se aplica',
+      dataVencimento: 'Consulta de revisão 1 vez por ano',
+      consequenciaAtraso: 'Dentadura frouxa ou quebrada pode machucar a gengiva.',
+      avisoConferencia: 'Siga sempre o produto de limpeza indicado pelo seu dentista.'
+    },
+    linhaDigitavel: null,
+    codigoBarrasInfo: null,
+    pontosDeAtencao: [
+      'Segure a dentadura sobre uma pia com água ou uma toalha ao limpar. Se cair, ela pode quebrar.',
+      'Dormir sem a dentadura deixa a gengiva descansar.'
+    ],
+    sinaisDeAlerta: [
+      'Ferida, mancha branca ou vermelha na boca que não cicatriza em 15 dias: procure o dentista para avaliação.',
+      'Dentadura que machuca, balança ou está quebrada.',
+      'Dor ou inchaço na gengiva.'
+    ],
+    alertaEtico: 'Orientação educativa. A avaliação da prótese deve ser feita pelo dentista.',
+    textoParaVoz: 'Olá! Esta folha ensina a cuidar da sua dentadura. Depois de cada refeição, tire e escove a dentadura com escova macia e sabão neutro. Não use pasta de dente nela. Limpe também a gengiva e a língua. Para dormir, deixe a dentadura num copo com água limpa, nunca quente. Se aparecer uma ferida na boca que não sara em quinze dias, procure o dentista.',
+    meta: { provedor: 'gemini', modelo: 'gemini-2.5-flash', tempoProcessamentoMs: 1280, bytesRecebidos: 254000, arquivos: 1 }
+  },
+
+  pedido_exame: {
+    id: 'pedido_exame',
+    titulo: 'Pedido de Exame de Sangue',
+    descricao: 'Preparo do exame explicado: jejum, urina e documentos',
+    tag: 'Posto de Saúde',
+    categoria: 'PEDIDO_EXAME',
+    tipoDocumento: 'Pedido de Exames Laboratoriais (UBS)',
+    confianca: 'alta',
+    resumoSimples: 'O médico pediu exames de sangue e de urina. Para o resultado sair certo, você precisa fazer um preparo antes. O mais importante é ficar 8 horas sem comer.',
+    acoesEssenciais: [
+      'Fique 8 horas sem comer antes do exame. Você pode beber água.',
+      'Colete a primeira urina da manhã no frasco do laboratório. Jogue fora o primeiro jato e guarde o restante.',
+      'Leve este pedido, um documento com foto e o Cartão do SUS.',
+      'Tome os remédios de uso diário normalmente, a não ser que o médico tenha falado o contrário.',
+      'Volte ao posto para mostrar o resultado ao médico.'
+    ],
+    valoresEPrazos: {
+      valorPrincipal: 'Gratuito pelo SUS',
+      dataVencimento: 'Validade do pedido: confira no papel',
+      consequenciaAtraso: 'Se o pedido vencer, será preciso pedir outro ao médico.',
+      avisoConferencia: 'Exames pedidos: Hemograma, Glicemia em jejum, Colesterol total e frações, Urina tipo 1.'
+    },
+    linhaDigitavel: null,
+    codigoBarrasInfo: null,
+    pontosDeAtencao: [
+      'Não faça exercício físico pesado no dia anterior.',
+      'Evite bebida alcoólica nos 3 dias antes do exame.',
+      'Se você tem diabetes e usa insulina, pergunte ao posto como fazer o jejum com segurança.'
+    ],
+    sinaisDeAlerta: [
+      'Se você tem diabetes e sentir tremor, suor frio ou tontura durante o jejum, coma algo doce e avise a equipe.'
+    ],
+    alertaEtico: 'O preparo pode variar. Siga sempre as instruções do laboratório e do médico que pediu o exame.',
+    textoParaVoz: 'Olá! O médico pediu exames de sangue e de urina. Fique oito horas sem comer antes do exame, mas pode beber água. Colete a primeira urina da manhã no frasco do laboratório. Leve este pedido, um documento com foto e o Cartão do SUS. Depois, volte ao posto para mostrar o resultado ao médico.',
+    meta: { provedor: 'gemini', modelo: 'gemini-2.5-flash', tempoProcessamentoMs: 1350, bytesRecebidos: 288000, arquivos: 1 }
+  },
+
+  resultado_exame: {
+    id: 'resultado_exame',
+    titulo: 'Resultado de Exame (sem diagnóstico)',
+    descricao: 'Explica os termos do laudo sem dar diagnóstico',
+    tag: 'Posto de Saúde',
+    categoria: 'RESULTADO_EXAME',
+    tipoDocumento: 'Laudo de Exames Laboratoriais',
+    confianca: 'alta',
+    resumoSimples: 'Este é o resultado dos seus exames de sangue. O papel mostra o valor de cada exame e, ao lado, a faixa de referência do laboratório. Só o médico pode dizer o que esses números significam para a sua saúde.',
+    acoesEssenciais: [
+      'Agende uma consulta no posto para mostrar este resultado ao médico.',
+      'Leve também os resultados de exames antigos, se tiver.',
+      'Não comece, não pare e não troque nenhum remédio por causa deste papel.'
+    ],
+    valoresEPrazos: {
+      valorPrincipal: 'Não se aplica',
+      dataVencimento: 'Mostrar ao médico na próxima consulta',
+      consequenciaAtraso: 'Guarde o resultado para comparar com exames futuros.',
+      avisoConferencia: 'Confira se o seu nome e a data de nascimento no laudo estão corretos.'
+    },
+    linhaDigitavel: null,
+    codigoBarrasInfo: null,
+    pontosDeAtencao: [
+      '"Valores de referência" é a faixa que o laboratório usa para comparar. Ela pode mudar de um laboratório para outro.',
+      '"mg/dL" é só a unidade de medida, como "metros" ou "quilos".',
+      'Um resultado marcado com asterisco (*) está fora da faixa de referência. Isso não é motivo para pânico: mostre ao médico.'
+    ],
+    sinaisDeAlerta: [],
+    alertaEtico: 'Este aplicativo não interpreta exames nem faz diagnóstico. A avaliação é sempre do médico ou do dentista.',
+    textoParaVoz: 'Olá! Este é o resultado dos seus exames de sangue. Ao lado de cada número, o laboratório mostra a faixa de referência. Um asterisco indica que o valor está fora dessa faixa, mas isso não é motivo para pânico. Só o médico pode explicar o que significa para você. Agende uma consulta no posto e leve este papel.',
+    meta: { provedor: 'gemini', modelo: 'gemini-2.5-flash', tempoProcessamentoMs: 1460, bytesRecebidos: 312000, arquivos: 1 }
+  },
+
+  vacinacao_idoso: {
+    id: 'vacinacao_idoso',
+    titulo: 'Caderneta de Vacinação do Idoso',
+    descricao: 'Mostra quais vacinas conferir na sala de vacina',
+    tag: 'Posto de Saúde',
+    categoria: 'VACINACAO',
+    tipoDocumento: 'Caderneta de Vacinação da Pessoa Idosa',
+    confianca: 'media',
+    resumoSimples: 'Esta é a sua caderneta de vacinação. Algumas vacinas parecem estar atrasadas, como a da gripe deste ano e o reforço contra tétano. A equipe da sala de vacina do posto vai conferir tudo com você.',
+    acoesEssenciais: [
+      'Leve esta caderneta, um documento com foto e o Cartão do SUS à sala de vacina do posto.',
+      'Pergunte se a vacina da gripe deste ano ainda está disponível.',
+      'Pergunte sobre o reforço da vacina dupla adulto (difteria e tétano): a última dose foi há mais de 10 anos.',
+      'Pergunte sobre a 3ª dose da hepatite B: aparecem só 2 doses anotadas.'
+    ],
+    valoresEPrazos: {
+      valorPrincipal: 'Gratuito pelo SUS',
+      dataVencimento: 'Procurar a sala de vacina',
+      consequenciaAtraso: 'Vacinas atrasadas deixam você menos protegido contra doenças graves.',
+      avisoConferencia: 'Algumas anotações estão apagadas. A equipe de vacinação vai conferir no sistema.'
+    },
+    linhaDigitavel: null,
+    codigoBarrasInfo: null,
+    pontosDeAtencao: [
+      'Gripe: última dose anotada em 2025.',
+      'Dupla adulto (dT): última dose anotada em 2014.',
+      'Covid-19: confira com a equipe se há reforço indicado para a sua idade.'
+    ],
+    sinaisDeAlerta: [
+      'Depois de vacinar: falta de ar, inchaço no rosto ou manchas pelo corpo exigem atendimento imediato (192).'
+    ],
+    alertaEtico: 'O calendário de vacinas muda. Quem confirma as vacinas indicadas é a equipe de saúde do posto.',
+    textoParaVoz: 'Olá! Esta é a sua caderneta de vacinação. A vacina da gripe deste ano e o reforço contra o tétano parecem estar atrasados. Leve a caderneta, um documento com foto e o Cartão do SUS à sala de vacina do posto. A equipe vai conferir tudo com você. As vacinas são gratuitas.',
+    meta: { provedor: 'gemini', modelo: 'gemini-2.5-flash', tempoProcessamentoMs: 1520, bytesRecebidos: 341000, arquivos: 1 }
+  },
+
+  golpe_sus: {
+    id: 'golpe_sus',
+    titulo: 'SMS Falso de Agendamento do SUS',
+    descricao: 'Golpe que cobra "taxa" para não cancelar consulta',
+    tag: 'Alerta Antifraude',
+    categoria: 'ALERTA_GOLPE_SUSPEITO',
+    tipoDocumento: 'Mensagem Falsa em Nome do SUS (Golpe)',
+    confianca: 'alta',
+    resumoSimples: '🚨 CUIDADO: Esta mensagem é um GOLPE! O SUS é gratuito e nunca cobra taxa por Pix para confirmar ou manter consulta, exame ou cirurgia.',
+    acoesEssenciais: [
+      'NÃO clique no link da mensagem.',
+      'NÃO faça Pix e não informe senhas, códigos ou dados do banco.',
+      'Para confirmar sua consulta, vá ao posto de saúde ou use o aplicativo oficial Meu SUS Digital.',
+      'Em caso de dúvida, ligue para o Disque Saúde: 136.',
+      'Bloqueie o número e avise seus familiares.'
+    ],
+    valoresEPrazos: {
+      valorPrincipal: 'Cobrança Falsa (Golpe)',
+      dataVencimento: 'Não Pague',
+      consequenciaAtraso: 'Sua consulta NÃO será cancelada por causa desta mensagem.',
+      avisoConferencia: 'O SUS não cobra taxas. Link e remetente não são oficiais.'
+    },
+    linhaDigitavel: null,
+    codigoBarrasInfo: null,
+    pontosDeAtencao: [
+      'A mensagem usa pressa ("cancelamento em 2 horas") para assustar.',
+      'O link não termina em ".gov.br", que é o final dos sites oficiais do governo.'
+    ],
+    sinaisDeAlerta: [],
+    alertaEtico: 'Alerta preventivo contra golpes que usam o nome do SUS e de unidades de saúde.',
+    textoParaVoz: 'Atenção! Esta mensagem é um golpe. O SUS é gratuito e nunca cobra taxa por Pix para manter sua consulta. Não clique no link e não faça pagamento. Para confirmar sua consulta, vá ao posto de saúde ou ligue para o Disque Saúde, um três seis.',
+    meta: { provedor: 'gemini', modelo: 'gemini-2.5-flash', tempoProcessamentoMs: 1080, bytesRecebidos: 198000, arquivos: 1 }
   }
 };
+
+/**
+ * Exemplos exibidos no Modo Saúde (clínica odontológica e posto de saúde), na ordem da apresentação.
+ */
+export const HEALTH_DEMO_KEYS = [
+  'pos_extracao',
+  'receita_odontologica',
+  'protese_dentaria',
+  'pedido_exame',
+  'resultado_exame',
+  'vacinacao_idoso',
+  'receita_medica',
+  'golpe_sus'
+];

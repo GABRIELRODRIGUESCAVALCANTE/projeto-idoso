@@ -4,6 +4,11 @@ export const documentSchema = z.object({
   categoria: z.enum([
     'CONTA_SERVICO',
     'SAUDE_RECEITA',
+    'ODONTOLOGIA',
+    'ORIENTACAO_POS_PROCEDIMENTO',
+    'PEDIDO_EXAME',
+    'RESULTADO_EXAME',
+    'VACINACAO',
     'NOTIFICACAO_LEGAL',
     'BENEFICIO_SOCIAL',
     'EQUIPAMENTO_HARDWARE',
@@ -46,6 +51,8 @@ export const documentSchema = z.object({
     }).optional()
   }).nullable().optional().default(null),
   pontosDeAtencao: z.array(z.string()).default([]),
+  // Módulo Saúde: sinais que exigem procurar a unidade de saúde ou o SAMU (192)
+  sinaisDeAlerta: z.array(z.string()).optional().default([]),
   alertaEtico: z.string().min(1, 'O alerta ético preventivo é obrigatório'),
   textoParaVoz: z.string().min(5, 'O texto formatado para voz é obrigatório'),
   // Módulo Específico: Diagnóstico Técnico para Nível 2 / Help Desk
