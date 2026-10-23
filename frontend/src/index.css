@@ -3,11 +3,70 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    color: #0f172a;
-    background-color: #f8fafc;
+    @apply bg-paper text-ink font-sans;
     min-height: 100vh;
+    font-size: 1rem;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  h1, h2, h3, h4 {
+    @apply text-ink;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* ========================================================
+   COMPONENTES BASE DO SISTEMA VISUAL
+   ======================================================== */
+@layer components {
+  .surface {
+    @apply bg-white rounded-[1.75rem] border border-ink/10 shadow-soft;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
+      min-h-[48px] px-5 py-2.5 text-base leading-tight
+      transition-[background-color,border-color,color,transform,box-shadow] duration-200
+      active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none select-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-pine-700 text-white shadow-soft hover:bg-pine-800;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-ink border border-ink/15 hover:border-ink/30 hover:bg-paper;
+  }
+
+  .btn-quiet {
+    @apply btn bg-transparent text-pine-800 hover:bg-pine-50;
+  }
+
+  .btn-sm {
+    @apply min-h-[44px] px-4 py-2 text-sm;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold;
+  }
+
+  .section-title {
+    @apply font-display text-xl sm:text-2xl font-semibold text-ink leading-snug;
+  }
+
+  .eyebrow {
+    @apply text-sm font-bold text-pine-700;
   }
 }
 
@@ -15,7 +74,7 @@
    ACESSIBILIDADE: FOCO VISÍVEL REFORÇADO (WCAG 2.2 AA)
    ======================================================== */
 *:focus-visible {
-  outline: 3px solid #0284c7 !important;
+  outline: 3px solid #1A5E4C !important;
   outline-offset: 3px !important;
   box-shadow: 0 0 0 2px #ffffff !important;
 }
@@ -34,13 +93,23 @@
   }
   .animate-bounce,
   .animate-pulse,
-  .animate-spin {
+  .animate-spin,
+  .animate-scan {
     animation: none !important;
   }
 }
 
+/* Rolagem horizontal sem barra visível (lista de exemplos no celular) */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* ========================================================
    MODO ALTO CONTRASTE (WCAG AAA - CONTRASTE > 7:1)
+   Regras genéricas por prefixo de classe para cobrir todo o sistema visual.
    ======================================================== */
 .high-contrast {
   color-scheme: dark;
@@ -55,16 +124,13 @@
 .high-contrast footer,
 .high-contrast main,
 .high-contrast section,
-.high-contrast div[role="dialog"] > div,
-.high-contrast .bg-white,
-.high-contrast .bg-slate-50,
-.high-contrast .bg-sky-50,
-.high-contrast .bg-amber-50,
-.high-contrast .bg-rose-50,
-.high-contrast .bg-emerald-50 {
+.high-contrast .surface,
+.high-contrast [class*="bg-"] {
   background-color: #0d0d0d !important;
+  background-image: none !important;
   color: #ffffff !important;
-  border-color: #ffff00 !important; /* Amarelo puro de alto contraste */
+  border-color: #ffff00 !important;
+  box-shadow: none !important;
 }
 
 .high-contrast h1,
@@ -73,22 +139,39 @@
 .high-contrast h4,
 .high-contrast p,
 .high-contrast span,
+.high-contrast strong,
 .high-contrast label,
-.high-contrast li {
+.high-contrast li,
+.high-contrast [class*="text-"] {
   color: #ffffff !important;
 }
 
-.high-contrast .text-slate-500,
-.high-contrast .text-slate-600,
-.high-contrast .text-slate-700,
-.high-contrast .text-sky-700,
-.high-contrast .text-amber-800,
-.high-contrast .text-rose-700 {
+.high-contrast .eyebrow,
+.high-contrast [class*="text-ink-muted"],
+.high-contrast [class*="text-pine-"],
+.high-contrast [class*="text-slate-5"],
+.high-contrast [class*="text-slate-6"] {
   color: #ffff00 !important;
 }
 
-.high-contrast button {
+.high-contrast [class*="border"] {
+  border-color: #ffff00 !important;
+}
+
+.high-contrast button,
+.high-contrast a[href]:not(.plain-link) {
   border: 2px solid #ffff00 !important;
+}
+
+.high-contrast .btn-primary,
+.high-contrast .karaoke-active {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+}
+
+.high-contrast .btn-primary *,
+.high-contrast .karaoke-active * {
+  color: #000000 !important;
 }
 
 .high-contrast input[type="text"] {

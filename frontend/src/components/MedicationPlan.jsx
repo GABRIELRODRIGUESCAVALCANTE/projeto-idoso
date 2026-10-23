@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pill, AlertTriangle, CheckCircle, Calendar, ShieldAlert, Clock, Share2 } from 'lucide-react';
+import { CheckCircle2, CalendarPlus, ShieldAlert, Clock, Share2 } from 'lucide-react';
 
 /**
  * Mapeia instruções médicas para janelas amigáveis da rotina do idoso.
@@ -47,7 +47,7 @@ function sugerirHorariosRotina(instrucao) {
   return null;
 }
 
-export default function MedicationPlan({ detalhesReceita, fontSizeClass = '' }) {
+export default function MedicationPlan({ detalhesReceita }) {
   if (!detalhesReceita) return null;
 
   const medicamentos = Array.isArray(detalhesReceita.medicamentosIdentificados)
@@ -111,128 +111,78 @@ export default function MedicationPlan({ detalhesReceita, fontSizeClass = '' }) 
   };
 
   return (
-    <div className="mt-5 rounded-2xl border-2 border-emerald-300 bg-emerald-50/60 p-4 sm:p-5 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0">
-            <Pill className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-base sm:text-lg font-extrabold text-emerald-950">
-              Plano Acessível de Medicamentos Identificados
-            </h4>
-            <p className="text-xs sm:text-sm text-emerald-800">
-              Confira a lista dos remédios lidos na receita médica e os horários da rotina
-            </p>
-          </div>
+    <div className="rounded-[1.5rem] border border-ink/10 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 bg-pine-50">
+        <div>
+          <h3 className="font-display text-xl font-semibold text-pine-950">Seus remédios e horários</h3>
+          <p className="text-pine-900/80 text-sm mt-0.5">Horários sugeridos para a rotina. Confirme com quem receitou.</p>
         </div>
-
         {medicamentos.length > 0 && (
           <button
             type="button"
             onClick={handleShareWhatsApp}
-            aria-label="Compartilhar lista de remédios com o cuidador no WhatsApp"
-            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all self-start sm:self-auto focus-visible:ring-4 focus-visible:ring-emerald-500"
+            aria-label="Enviar a lista de remédios pelo WhatsApp"
+            className="btn-secondary btn-sm self-start sm:self-auto"
           >
-            <Share2 className="w-4 h-4" />
-            <span>Enviar no WhatsApp</span>
+            <Share2 className="w-4 h-4 text-pine-700" />
+            Enviar ao cuidador
           </button>
         )}
       </div>
 
       {temIlegivel && (
-        <div className="mb-4 p-3.5 rounded-xl bg-amber-100 border border-amber-300 text-amber-950 flex items-start gap-2.5 text-xs sm:text-sm">
-          <AlertTriangle className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
-          <div>
-            <strong className="block font-bold">Atenção Crítica de Saúde:</strong>
-            Há trecho de caligrafia ilegível ou rasurado na receita. Por segurança, o sistema nunca tenta adivinhar. Leve a receita física para conferência obrigatória com o farmacêutico no balcão!
-          </div>
-        </div>
+        <p className="px-5 py-3 bg-amber-50 border-b border-amber-200 text-amber-950 text-sm">
+          <strong>Atenção:</strong> parte da receita está ilegível ou rasurada. Leve a receita ao farmacêutico para conferir.
+        </p>
       )}
 
       {medicamentos.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3">
+        <ul className="divide-y divide-ink/10 bg-white">
           {medicamentos.map((med, index) => {
             const isLegivel = med.legivel !== false;
             const horariosSugeridos = sugerirHorariosRotina(med.instrucao);
 
             return (
-              <div
-                key={index}
-                className={`p-3.5 sm:p-4 rounded-xl border bg-white shadow-xs transition-all ${
-                  isLegivel ? 'border-emerald-200' : 'border-rose-300 bg-rose-50/50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-extrabold text-slate-900 text-base sm:text-lg">
-                        {med.nome}
-                      </span>
-                      {med.dosagem && (
-                        <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-xs font-bold">
-                          {med.dosagem}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                      <strong>Como tomar:</strong> {med.instrucao || 'Conforme orientação médica no rótulo.'}
-                    </p>
-
-                    {/* Janelas Humanizadas da Rotina */}
-                    {horariosSugeridos && (
-                      <div className="pt-1">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1 mb-1">
-                          <Clock className="w-3 h-3 text-emerald-600" /> Horários sugeridos para sua rotina:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {horariosSugeridos.map((h, hIdx) => (
-                            <span
-                              key={hIdx}
-                              className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-1"
-                            >
-                              <strong>{h.horario}</strong> ({h.rotina})
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {isLegivel ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex-shrink-0">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      Lido com certeza
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-100 px-2.5 py-1 rounded-full flex-shrink-0">
-                      <ShieldAlert className="w-3.5 h-3.5" />
-                      Trecho com dúvida
-                    </span>
-                  )}
+              <li key={index} className={`p-4 sm:p-5 space-y-3 ${isLegivel ? '' : 'bg-rose-50/60'}`}>
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="font-bold text-lg text-ink">{med.nome}</span>
+                  {med.dosagem && <span className="text-ink-muted">{med.dosagem}</span>}
+                  <span className={`ml-auto chip text-xs ${isLegivel ? 'bg-pine-50 text-pine-800' : 'bg-rose-100 text-rose-800'}`}>
+                    {isLegivel ? <CheckCircle2 className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
+                    {isLegivel ? 'Lido com clareza' : 'Confirmar na farmácia'}
+                  </span>
                 </div>
+                <p className="text-ink-soft">{med.instrucao || 'Conforme a orientação da receita.'}</p>
 
-                {isLegivel && (
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadReminder(med)}
-                      className="min-h-[44px] px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold inline-flex items-center gap-1.5 transition-colors focus-visible:ring-4 focus-visible:ring-emerald-500"
-                      aria-label={`Adicionar lembrete no calendário para ${med.nome}`}
-                    >
-                      <Calendar className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>Salvar lembrete diário (.ics)</span>
-                    </button>
+                {horariosSugeridos && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Clock className="w-4 h-4 text-pine-700" aria-hidden="true" />
+                    {horariosSugeridos.map((h, hIdx) => (
+                      <span key={hIdx} className="inline-flex items-baseline gap-1.5 rounded-xl bg-paper px-3 py-1.5 text-sm">
+                        <strong className="text-ink tabular-nums">{h.horario}</strong>
+                        <span className="text-ink-muted">{h.rotina}</span>
+                      </span>
+                    ))}
                   </div>
                 )}
-              </div>
+
+                {isLegivel && (
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadReminder(med)}
+                    className="btn-quiet btn-sm -ml-3"
+                    aria-label={`Criar lembrete diário no celular para ${med.nome}`}
+                  >
+                    <CalendarPlus className="w-4 h-4" />
+                    Criar lembrete no celular
+                  </button>
+                )}
+              </li>
             );
           })}
-        </div>
+        </ul>
       ) : (
-        <p className="text-xs sm:text-sm text-slate-600 italic">
-          Nenhum medicamento específico pôde ser extraído com 100% de clareza visual.
-        </p>
+        <p className="p-5 bg-white text-ink-muted">Nenhum remédio pôde ser lido com clareza suficiente.</p>
       )}
     </div>
   );
