@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  MessageCircleQuestion, 
-  Send, 
-  Mic, 
-  MicOff, 
-  Volume2, 
-  VolumeX, 
-  Loader2, 
-  Sparkles, 
-  HelpCircle,
+import {
+  MessageCircleQuestion,
+  Send,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Loader2,
   AlertCircle
 } from 'lucide-react';
 import { speechController } from '../utils/speech';
 
-export default function DocumentQA({ documentData, fontSizeClass = '' }) {
+export default function DocumentQA({ documentData }) {
   const [questionInput, setQuestionInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [qaHistory, setQaHistory] = useState([]);
@@ -184,89 +182,48 @@ export default function DocumentQA({ documentData, fontSizeClass = '' }) {
   };
 
   return (
-    <section className="bg-sky-50/50 border border-sky-200/80 rounded-3xl p-5 sm:p-6 space-y-5">
-      {/* Cabeçalho da Seção de Dúvidas */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-sky-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm shadow-sky-600/30">
+    <section aria-labelledby="duvidas-titulo" className="surface p-5 sm:p-8 space-y-5">
+      <div className="flex items-start gap-4">
+        <span className="w-11 h-11 rounded-2xl bg-clay-50 text-clay-600 flex items-center justify-center flex-shrink-0">
           <MessageCircleQuestion className="w-6 h-6" />
-        </div>
-        <div>
-          <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
-            Ficou com alguma dúvida sobre este papel?
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-600">
-            Pergunte o que quiser ou toque em uma sugestão abaixo:
-          </p>
-        </div>
-      </div>
-
-      {/* Sugestões Rápidas (Chips de 1 clique) */}
-      <div className="space-y-1.5">
-        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-          <Sparkles className="w-3.5 h-3.5 text-sky-600" />
-          Perguntas Frequentes (Toque para perguntar):
         </span>
-        <div className="flex flex-wrap gap-2 pt-1">
-          {suggestions.map((suggestion, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleSubmitQuestion(suggestion)}
-              disabled={isLoading}
-              className="text-left px-3.5 py-2 rounded-xl bg-white hover:bg-sky-100/70 border border-sky-200 text-sky-900 text-xs sm:text-sm font-semibold transition-all shadow-xs active:scale-95 disabled:opacity-50"
-            >
-              💬 {suggestion}
-            </button>
-          ))}
+        <div>
+          <h2 id="duvidas-titulo" className="section-title">Ficou alguma dúvida?</h2>
+          <p className="text-ink-muted mt-0.5">Pergunte por escrito ou pelo microfone.</p>
         </div>
       </div>
 
-      {/* Histórico de Respostas */}
+      {/* Sugestões de perguntas */}
+      <div className="flex flex-wrap gap-2">
+        {suggestions.map((suggestion, idx) => (
+          <button
+            key={idx}
+            onClick={() => handleSubmitQuestion(suggestion)}
+            disabled={isLoading}
+            className="text-left rounded-2xl border border-ink/15 bg-white hover:border-pine-500 hover:bg-pine-50 px-4 py-2.5 text-ink transition-colors disabled:opacity-50"
+          >
+            {suggestion}
+          </button>
+        ))}
+      </div>
+
+      {/* Conversa */}
       {qaHistory.length > 0 && (
-        <div className="space-y-3 pt-2">
+        <div className="space-y-4">
           {qaHistory.map((item, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 space-y-3 shadow-xs"
-            >
-              {/* Pergunta do Cidadão */}
-              <div className="flex items-start gap-2.5">
-                <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                  Você
-                </span>
-                <p className="text-sm sm:text-base font-bold text-slate-800">
-                  "{item.question}"
-                </p>
-              </div>
-
-              {/* Resposta Acolhedora da IA */}
-              <div className="bg-sky-50/60 rounded-xl p-3.5 border-l-4 border-sky-500 space-y-2">
-                <p className="text-sm sm:text-base text-slate-800 leading-relaxed font-medium">
-                  {item.answer}
-                </p>
-
-                {/* Botão de Ouvir Resposta */}
-                <div className="pt-1">
-                  <button
-                    onClick={() => handleSpeakAnswer(index, item.answer)}
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      speakingIndex === index
-                        ? 'bg-rose-100 text-rose-800 hover:bg-rose-200'
-                        : 'bg-sky-100 text-sky-800 hover:bg-sky-200'
-                    }`}
-                  >
-                    {speakingIndex === index ? (
-                      <>
-                        <VolumeX className="w-4 h-4" />
-                        <span>Parar Leitura</span>
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 className="w-4 h-4" />
-                        <span>Ouvir Resposta</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+            <div key={index} className="space-y-2 animate-fade-up">
+              <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-ink text-white px-4 py-2.5">
+                {item.question}
+              </p>
+              <div className="max-w-[92%] rounded-2xl rounded-bl-md bg-paper px-4 py-3 space-y-2">
+                <p className="text-ink leading-relaxed">{item.answer}</p>
+                <button
+                  onClick={() => handleSpeakAnswer(index, item.answer)}
+                  className="btn-quiet btn-sm -ml-3"
+                >
+                  {speakingIndex === index ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  {speakingIndex === index ? 'Parar' : 'Ouvir resposta'}
+                </button>
               </div>
             </div>
           ))}
@@ -274,87 +231,51 @@ export default function DocumentQA({ documentData, fontSizeClass = '' }) {
         </div>
       )}
 
-      {/* Mensagem de Erro */}
       {error && (
-        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs sm:text-sm flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
-          <span>{error}</span>
-        </div>
+        <p role="alert" className="flex items-center gap-2 rounded-2xl bg-rose-50 border border-rose-200 p-3 text-rose-900">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600" />
+          {error}
+        </p>
       )}
 
-      {/* Formulário de Pergunta: Campo de Texto + Microfone + Enviar */}
+      {/* Campo de pergunta */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           handleSubmitQuestion();
         }}
-        className="flex items-center gap-2 pt-1"
+        className="flex items-center gap-2 rounded-full border border-ink/15 bg-white p-1.5 pl-5 focus-within:border-pine-500 focus-within:ring-4 focus-within:ring-pine-100 transition-shadow"
       >
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={questionInput}
-            onChange={(e) => setQuestionInput(e.target.value)}
-            disabled={isLoading}
-            placeholder={
-              isListening
-                ? 'Ouvindo sua dúvida... Pode falar!'
-                : 'Escreva sua dúvida aqui...'
-            }
-            className={`w-full px-4 py-3.5 sm:py-4 rounded-2xl bg-white border text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all ${
-              isListening
-                ? 'border-rose-400 bg-rose-50/50 text-rose-900 placeholder:text-rose-600 animate-pulse'
-                : 'border-slate-300 text-slate-800'
-            }`}
-          />
-        </div>
-
-        {/* Botão de Falar (Microfone com Ícone + Texto) */}
+        <label htmlFor="pergunta" className="sr-only">Sua dúvida</label>
+        <input
+          id="pergunta"
+          type="text"
+          value={questionInput}
+          onChange={(e) => setQuestionInput(e.target.value)}
+          disabled={isLoading}
+          placeholder={isListening ? 'Pode falar, estou ouvindo…' : 'Escreva sua dúvida'}
+          className="flex-1 min-w-0 bg-transparent text-ink placeholder:text-ink-muted focus:outline-none py-2"
+        />
         {speechSupported && (
           <button
             type="button"
             onClick={handleToggleListening}
             disabled={isLoading}
-            title={isListening ? 'Parar gravação' : 'Falar dúvida pelo microfone'}
-            aria-label={isListening ? 'Parar gravação de voz' : 'Falar dúvida pelo microfone do aparelho'}
-            className={`min-h-[44px] px-3.5 sm:px-4 py-3 rounded-2xl font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 flex-shrink-0 focus-visible:ring-4 focus-visible:ring-sky-500 ${
-              isListening
-                ? 'bg-rose-500 hover:bg-rose-600 text-white animate-pulse'
-                : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-800'
+            aria-label={isListening ? 'Parar de gravar' : 'Falar a dúvida pelo microfone'}
+            className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+              isListening ? 'bg-rose-600 text-white animate-pulse' : 'text-pine-700 hover:bg-pine-50'
             }`}
           >
-            {isListening ? (
-              <>
-                <MicOff className="w-5 h-5 text-white" />
-                <span className="text-xs font-bold">Ouvindo...</span>
-              </>
-            ) : (
-              <>
-                <Mic className="w-5 h-5 text-sky-600" />
-                <span className="text-xs font-bold">Falar</span>
-              </>
-            )}
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </button>
         )}
-
-        {/* Botão Enviar Pergunta (Ícone + Texto sempre visíveis) */}
         <button
           type="submit"
           disabled={isLoading || !questionInput.trim()}
-          aria-label="Enviar dúvida para o assistente de IA"
-          className="min-h-[44px] px-4 sm:px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold text-xs sm:text-base flex items-center justify-center gap-2 shadow-md shadow-sky-600/20 active:scale-95 transition-all flex-shrink-0 focus-visible:ring-4 focus-visible:ring-sky-500"
+          aria-label="Enviar pergunta"
+          className="w-11 h-11 rounded-full bg-pine-700 hover:bg-pine-800 text-white flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-40"
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Pensando...</span>
-            </>
-          ) : (
-            <>
-              <Send className="w-5 h-5" />
-              <span>Perguntar</span>
-            </>
-          )}
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
         </button>
       </form>
     </section>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Volume2, VolumeX, Pause, Play, Gauge, AlertCircle, Sparkles } from 'lucide-react';
+import { Square, Pause, Play, Gauge, AlertCircle } from 'lucide-react';
 import { speechController } from '../utils/speech';
 
 export default function AudioPlayer({ textToSpeak }) {
@@ -122,128 +122,83 @@ export default function AudioPlayer({ textToSpeak }) {
 
   if (!supported) {
     return (
-      <div role="status" className="p-4 bg-amber-50 text-amber-900 border border-amber-200 rounded-2xl text-xs sm:text-sm mb-6 flex items-center gap-2">
-        <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-        <span>Seu navegador não possui sintetizador de áudio automático. Você pode ler a explicação na tela.</span>
+      <div role="status" className="rounded-2xl bg-paper-deep/70 border border-ink/10 p-4 flex items-center gap-3 text-ink-soft">
+        <AlertCircle className="w-5 h-5 text-clay-600 flex-shrink-0" />
+        <span>Este navegador não lê textos em voz alta. A explicação completa está abaixo.</span>
       </div>
     );
   }
 
+  const isSpeaking = isPlaying && !isPaused;
+  const rateLabel = speechRate === 0.8 ? 'Bem devagar' : speechRate === 0.9 ? 'Calma' : 'Normal';
+
   return (
-    <section
-      aria-label="Reprodutor de Leitura em Voz Alta Acessível"
-      className="bg-gradient-to-r from-sky-700 to-indigo-800 rounded-3xl p-5 sm:p-6 text-white shadow-lg shadow-sky-900/20 mb-6"
-    >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        {/* Descrição e Status (com aria-live para leitor de tela) */}
-        <div className="flex items-center gap-3.5">
-          <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all ${
-              isPlaying && !isPaused ? 'bg-emerald-400 text-emerald-950 animate-pulse' : 'bg-white/20 text-white'
-            }`}
-          >
-            <Volume2 className="w-7 h-7" />
-          </div>
-          <div>
-            <h3 className="text-base sm:text-lg font-black leading-tight" aria-live="polite">
-              {isPlaying ? (isPaused ? 'Áudio Pausado' : 'Lendo em Voz Alta para Você...') : 'Ouvir a Explicação em Áudio'}
-            </h3>
-            <p className="text-xs sm:text-sm text-sky-100 font-medium">
-              {isPlaying
-                ? 'Acompanhe as frases destacadas na caixa abaixo'
-                : 'Ideal para idosos ou para quem prefere escutar em vez de ler'}
-            </p>
-          </div>
-        </div>
+    <section aria-label="Ouvir a explicação em voz alta" className="rounded-[1.75rem] bg-pine-900 text-white p-5 sm:p-6 shadow-lift">
+      <div className="flex items-center gap-4">
+        {/* Botão principal grande: tocar / pausar */}
+        <button
+          onClick={handleTogglePlay}
+          aria-label={isSpeaking ? 'Pausar a leitura' : isPaused ? 'Continuar a leitura' : 'Ouvir a explicação'}
+          className="relative w-16 h-16 sm:w-[4.5rem] sm:h-[4.5rem] rounded-full bg-[#F6F3EE] text-pine-900 flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105 active:scale-95"
+        >
+          {isSpeaking && <span className="absolute inset-0 rounded-full ring-4 ring-pine-300/50 animate-pulse" aria-hidden="true" />}
+          {isSpeaking ? <Pause className="w-7 h-7 fill-current" /> : <Play className="w-7 h-7 fill-current ml-1" />}
+        </button>
 
-        {/* Controles de Reprodução (Alvos de Toque >= 44px com Ícone + Texto) */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-start sm:justify-end">
-          {/* Botão de Velocidade */}
-          <button
-            onClick={toggleRate}
-            aria-label={`Velocidade da voz: ${speechRate === 0.8 ? 'Bem Lento' : speechRate === 0.9 ? 'Ritmo Calmo' : 'Mais Rápido'}. Toque para alterar.`}
-            className="min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 active:bg-white/30 text-xs font-extrabold flex items-center gap-2 transition-all border border-white/10 focus-visible:ring-4 focus-visible:ring-amber-300"
-          >
-            <Gauge className="w-4 h-4" />
-            <span>{speechRate === 0.8 ? 'Voz Bem Lenta' : speechRate === 0.9 ? 'Voz Calma' : 'Voz Rápida'}</span>
-          </button>
-
-          {/* Botão Principal Play / Pause */}
-          <button
-            onClick={handleTogglePlay}
-            aria-label={isPlaying && !isPaused ? 'Pausar leitura de áudio' : 'Ouvir explicação agora'}
-            className={`min-h-[44px] px-5 py-3 rounded-2xl font-black text-sm sm:text-base shadow-md flex items-center gap-2 transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-amber-300 ${
-              isPlaying && !isPaused
-                ? 'bg-amber-400 text-amber-950 hover:bg-amber-300'
-                : 'bg-white text-sky-950 hover:bg-sky-50'
-            }`}
-          >
-            {isPlaying && !isPaused ? (
-              <>
-                <Pause className="w-5 h-5 fill-current" />
-                <span>Pausar</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-5 h-5 fill-current" />
-                <span>{isPaused ? 'Continuar Ouvindo' : 'Ouvir Agora'}</span>
-              </>
-            )}
-          </button>
-
-          {/* Botão Parar / Reset (com ícone + texto) */}
-          {isPlaying && (
-            <button
-              onClick={handleStop}
-              aria-label="Parar leitura em áudio"
-              className="min-h-[44px] px-4 py-3 rounded-2xl bg-rose-600/90 hover:bg-rose-600 active:bg-rose-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-all focus-visible:ring-4 focus-visible:ring-rose-300"
-            >
-              <VolumeX className="w-4 h-4" />
-              <span>Parar</span>
-            </button>
-          )}
+        <div className="flex-1 min-w-0">
+          <p className="font-display text-xl sm:text-2xl font-semibold leading-tight text-white" aria-live="polite">
+            {isSpeaking ? 'Lendo para você…' : isPaused ? 'Leitura pausada' : 'Ouvir explicação'}
+          </p>
+          <p className="text-pine-100/80 mt-0.5">
+            {isPlaying ? 'Acompanhe a frase destacada abaixo.' : 'Toque no botão para ouvir em voz alta.'}
+          </p>
         </div>
       </div>
 
-      {/* ⚠️ Alerta de voz pt-BR ausente no aparelho */}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button
+          onClick={toggleRate}
+          aria-label={`Velocidade da voz: ${rateLabel}. Toque para mudar.`}
+          className="btn btn-sm bg-white/10 hover:bg-white/15 text-white border border-white/15"
+        >
+          <Gauge className="w-4 h-4" />
+          Voz: {rateLabel}
+        </button>
+        {isPlaying && (
+          <button onClick={handleStop} aria-label="Parar a leitura" className="btn btn-sm bg-white/10 hover:bg-white/15 text-white border border-white/15">
+            <Square className="w-4 h-4 fill-current" />
+            Parar
+          </button>
+        )}
+      </div>
+
       {!hasPtVoice && (
-        <div className="mt-3 p-3 bg-amber-500/20 border border-amber-300/40 rounded-xl text-xs text-amber-100 flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-300 mt-0.5" />
-          <span>
-            Seu celular ou computador não possui uma voz em português brasileiro instalada no sistema. O som pode soar mais mecânico. Você pode acompanhar a leitura destacada abaixo ou utilizar o leitor de tela nativo (TalkBack no Android / VoiceOver no iOS).
-          </span>
-        </div>
+        <p className="mt-4 flex items-start gap-2 text-sm text-clay-100">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-clay-300" />
+          Este aparelho não tem voz em português instalada, então o som pode parecer robótico. Você também pode usar o leitor de tela do celular (TalkBack ou VoiceOver).
+        </p>
       )}
 
-      {/* 📖 CONTROLE DE LEITURA GUIADA POR TRECHO (KARAOKÊ ACESSÍVEL) */}
-      <div className="mt-4 pt-3.5 border-t border-white/15">
-        <div className="flex items-center gap-2 mb-2 text-xs font-bold text-sky-200 uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          <span>Acompanhe a Leitura (Frase por Frase):</span>
-        </div>
-
-        <div
-          role="region"
-          aria-live="polite"
-          aria-label="Texto falado em tempo real"
-          className="bg-black/25 rounded-2xl p-4 text-sm sm:text-base leading-relaxed text-slate-100 border border-white/10 max-h-48 overflow-y-auto space-y-1.5"
-        >
-          {sentences.map((sentence, idx) => {
-            const isActive = isPlaying && idx === currentSentenceIndex;
-            return (
-              <span
-                key={idx}
-                className={`inline-block mr-1.5 transition-all duration-200 rounded-lg px-1.5 py-0.5 ${
-                  isActive
-                    ? 'bg-amber-300 text-slate-950 font-black shadow-md scale-[1.02] ring-2 ring-amber-400'
-                    : 'text-slate-100 opacity-90'
-                }`}
-              >
-                {sentence.text}
-              </span>
-            );
-          })}
-        </div>
+      {/* Leitura acompanhada frase a frase (karaokê acessível) */}
+      <div
+        role="region"
+        aria-live="polite"
+        aria-label="Texto sendo lido"
+        className="mt-4 rounded-2xl bg-black/20 p-4 max-h-52 overflow-y-auto leading-relaxed text-pine-50"
+      >
+        {sentences.map((sentence, idx) => {
+          const isActive = isPlaying && idx === currentSentenceIndex;
+          return (
+            <span
+              key={idx}
+              className={`inline mr-1 rounded-md px-1 py-0.5 transition-colors duration-200 box-decoration-clone ${
+                isActive ? 'karaoke-active bg-clay-300 text-ink' : isPlaying ? 'text-pine-50/60' : ''
+              }`}
+            >
+              {sentence.text}
+            </span>
+          );
+        })}
       </div>
     </section>
   );

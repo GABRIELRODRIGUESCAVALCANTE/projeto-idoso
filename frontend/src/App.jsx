@@ -5,46 +5,16 @@ import LoadingState from './components/LoadingState';
 import ResultCard from './components/ResultCard';
 import ConsentModal from './components/ConsentModal';
 import ProfessionalDisclaimer from './components/ProfessionalDisclaimer';
-import { AlertCircle, HelpCircle, HeartHandshake, ShieldCheck, RotateCcw, PlayCircle } from 'lucide-react';
-import { DEMO_PRESETS, HEALTH_DEMO_KEYS } from './utils/demoData';
+import DemoExamples from './components/DemoExamples';
+import { AlertCircle, RotateCcw, Camera, BookOpenText, Volume2, ShieldCheck } from 'lucide-react';
+import { DEMO_PRESETS, HEALTH_DEMO_KEYS, FULL_DEMO_KEYS } from './utils/demoData';
 import { getAppMode } from './utils/appMode';
 
-// Botões do banner de demonstração no modo completo
-const FULL_DEMO_BUTTONS = [
-  { key: 'conta_luz', label: '⚡ Conta de Luz', aria: 'Carregar exemplo de conta de luz', color: 'sky' },
-  { key: 'roteador_fibra', label: '📶 Roteador Fibra (LOS)', aria: 'Carregar exemplo de suporte técnico com roteador fibra', color: 'indigo' },
-  { key: 'tela_azul', label: '💻 Tela Azul (PC)', aria: 'Carregar exemplo de tela azul do Windows', color: 'blue' },
-  { key: 'golpe_falso_suporte', label: '🛑 Falso Suporte (SMS)', aria: 'Carregar exemplo de SMS de falso suporte', color: 'rose' },
-  { key: 'golpe_adulterado', label: '🚨 Golpe Boleto', aria: 'Carregar exemplo de golpe antifraude', color: 'rose' },
-  { key: 'receita_medica', label: '💊 Receita Médica', aria: 'Carregar exemplo de receita médica', color: 'emerald' }
+const HOW_IT_WORKS = [
+  { icon: Camera, title: 'Fotografe', text: 'Receita, pedido de exame, conta ou aviso.' },
+  { icon: BookOpenText, title: 'Entenda', text: 'Explicação curta, sem palavras difíceis.' },
+  { icon: Volume2, title: 'Ouça e compartilhe', text: 'Leitura em voz alta e envio pelo WhatsApp.' }
 ];
-
-// Botões do banner de demonstração no Modo Saúde (clínica odontológica e posto de saúde)
-const HEALTH_DEMO_EMOJIS = {
-  pos_extracao: '🦷',
-  receita_odontologica: '💊',
-  protese_dentaria: '😁',
-  pedido_exame: '🧪',
-  resultado_exame: '📋',
-  vacinacao_idoso: '💉',
-  receita_medica: '🩺',
-  golpe_sus: '🚨'
-};
-const HEALTH_DEMO_BUTTONS = HEALTH_DEMO_KEYS.map((key) => ({
-  key,
-  label: `${HEALTH_DEMO_EMOJIS[key] || '📄'} ${DEMO_PRESETS[key].titulo}`,
-  aria: `Carregar exemplo: ${DEMO_PRESETS[key].titulo}`,
-  color: key === 'golpe_sus' ? 'rose' : 'emerald'
-}));
-
-// Classes completas (Tailwind não gera classes montadas dinamicamente)
-const DEMO_BUTTON_COLORS = {
-  sky: 'bg-white hover:bg-sky-100 border-sky-300 text-sky-900',
-  indigo: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-300 text-indigo-900',
-  blue: 'bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-900',
-  rose: 'bg-rose-50 hover:bg-rose-100 border-rose-300 text-rose-900',
-  emerald: 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900'
-};
 
 export default function App() {
   const [appMode] = useState(getAppMode);
@@ -202,96 +172,107 @@ export default function App() {
   };
 
   const loadDemo = () => handleSelectDemo(defaultDemoKey);
-  const demoButtons = healthMode ? HEALTH_DEMO_BUTTONS : FULL_DEMO_BUTTONS;
+  const demoKeys = healthMode ? HEALTH_DEMO_KEYS : FULL_DEMO_KEYS;
+
+  // Ao abrir um resultado ou voltar ao início, leva a pessoa para o topo da página
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [result]);
+
+  const isHome = !isLoading && !result;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col">
+      <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 btn-primary">
+        Pular para o conteúdo
+      </a>
+
       <Header
         onIncreaseFont={handleIncreaseFont}
         onDecreaseFont={handleDecreaseFont}
         fontSizeLevel={fontSizeLevel}
-        onOpenPrivacy={() => setIsConsentModalOpen(true)}
         isHighContrast={isHighContrast}
         onToggleHighContrast={() => setIsHighContrast((prev) => !prev)}
         healthMode={healthMode}
       />
 
-      <main
-        role="main"
-        aria-live="polite"
-        className="flex-1 max-w-4xl w-full mx-auto px-4 py-6 sm:py-8"
-      >
-        {/* Aviso Geral de Isenção de Responsabilidade Profissional */}
-        <ProfessionalDisclaimer className="mb-4" healthMode={healthMode} />
-
-        {/* Banner de Demonstração Rápida */}
-        {!result && !isLoading && (
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-sky-50 border border-sky-200 text-xs sm:text-sm text-sky-900">
-            <span className="flex items-center gap-2 font-semibold">
-              <PlayCircle className="w-5 h-5 text-sky-700 flex-shrink-0" />
+      <main id="conteudo" role="main" aria-live="polite" className="flex-1 w-full max-w-3xl mx-auto px-4 pt-6 pb-16 sm:pt-10 space-y-8 sm:space-y-10">
+        {/* Abertura da página inicial */}
+        {isHome && (
+          <div className="animate-fade-up px-1">
+            <p className="eyebrow">Projeto de extensão universitária · gratuito</p>
+            <h1 className="mt-2 font-display text-[2.1rem] leading-[1.1] sm:text-5xl sm:leading-[1.05] font-semibold text-ink max-w-[18ch]">
+              {healthMode ? 'Entenda seus papéis de saúde, sem pressa.' : 'Entenda seus papéis, sem complicação.'}
+            </h1>
+            <p className="mt-4 text-lg text-ink-soft max-w-[52ch]">
               {healthMode
-                ? 'Exemplos de saúde (funcionam sem internet):'
-                : 'Modo Demonstração (Pitch): Teste cenários sem câmera:'}
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {demoButtons.map((btn) => (
-                <button
-                  key={btn.key}
-                  onClick={() => handleSelectDemo(btn.key)}
-                  aria-label={btn.aria}
-                  className={`px-3 py-1.5 font-extrabold rounded-xl border transition-all text-xs ${DEMO_BUTTON_COLORS[btn.color]}`}
-                >
-                  {btn.label}
-                </button>
-              ))}
-            </div>
+                ? 'Fotografe a receita, o pedido de exame ou as orientações do dentista. Explicamos em palavras simples e lemos em voz alta.'
+                : 'Fotografe uma conta, receita ou aviso. Explicamos em palavras simples, lemos em voz alta e avisamos se parecer golpe.'}
+            </p>
           </div>
         )}
 
         {/* Mensagem de Erro Acessível */}
         {error && (
-          <div
-            role="alert"
-            aria-live="assertive"
-            className="mb-6 p-4 sm:p-5 rounded-2xl bg-rose-50 border border-rose-300 text-rose-950 flex items-start gap-3.5 shadow-sm"
-          >
+          <div role="alert" aria-live="assertive" className="rounded-[1.5rem] bg-rose-50 border border-rose-200 p-5 flex items-start gap-4 animate-fade-up">
             <AlertCircle className="w-6 h-6 text-rose-600 flex-shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="font-extrabold text-base sm:text-lg">Não conseguimos processar o documento</h3>
-              <p className="text-sm sm:text-base leading-relaxed">{error}</p>
-              <button
-                onClick={handleReset}
-                className="min-h-[44px] mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-xs sm:text-sm font-extrabold text-rose-950 transition-colors focus-visible:ring-4 focus-visible:ring-rose-500"
-              >
+            <div className="space-y-2">
+              <h2 className="font-bold text-lg text-rose-950">Não conseguimos ler o documento</h2>
+              <p className="text-rose-900">{error}</p>
+              <button onClick={handleReset} className="btn-secondary btn-sm">
                 <RotateCcw className="w-4 h-4" />
-                <span>Tentar novamente</span>
+                Tentar de novo
               </button>
             </div>
           </div>
         )}
 
-        {/* Estado de Carregamento */}
         {isLoading && <LoadingState />}
 
-        {/* Fluxo: Uploader ou Resultado */}
-        {!isLoading && !result && (
-          <DocumentUploader
-            onAnalyze={handleAnalyze}
-            isLoading={isLoading}
-            hasConsent={hasConsent}
-            onRequestConsent={handleRequestConsent}
-            onSelectDemo={handleSelectDemo}
-            healthMode={healthMode}
-          />
+        {isHome && (
+          <>
+            <div className="animate-fade-up [animation-delay:60ms]">
+              <DocumentUploader
+                onAnalyze={handleAnalyze}
+                isLoading={isLoading}
+                hasConsent={hasConsent}
+                onRequestConsent={handleRequestConsent}
+                healthMode={healthMode}
+              />
+            </div>
+
+            <div className="animate-fade-up [animation-delay:120ms]">
+              <DemoExamples presetKeys={demoKeys} onSelectDemo={handleSelectDemo} />
+            </div>
+
+            {/* Como funciona */}
+            <section aria-labelledby="como-funciona" className="animate-fade-up [animation-delay:180ms]">
+              <h2 id="como-funciona" className="section-title px-1">Como funciona</h2>
+              <ol className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {HOW_IT_WORKS.map(({ icon: Icon, title, text }, index) => (
+                  <li key={title} className="flex sm:flex-col items-start gap-4 sm:gap-3 p-4 sm:p-5 rounded-[1.5rem] border border-ink/10 bg-white/60">
+                    <span className="relative w-11 h-11 rounded-2xl bg-pine-50 text-pine-700 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-5 h-5" />
+                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-clay-500 text-white text-xs font-bold flex items-center justify-center">
+                        {index + 1}
+                      </span>
+                    </span>
+                    <span>
+                      <span className="block font-bold text-ink">{title}</span>
+                      <span className="block text-ink-muted mt-0.5">{text}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <ProfessionalDisclaimer healthMode={healthMode} />
+          </>
         )}
 
         {!isLoading && result && (
-          <div role="region" aria-label="Resultado da explicação do documento">
-            <ResultCard
-              data={result}
-              onReset={handleReset}
-              healthMode={healthMode}
-            />
+          <div role="region" aria-label="Explicação do documento" className="animate-fade-up">
+            <ResultCard data={result} onReset={handleReset} healthMode={healthMode} />
           </div>
         )}
       </main>
@@ -307,25 +288,18 @@ export default function App() {
         onOpenDemo={loadDemo}
       />
 
-      {/* Rodapé Institucional do Projeto de Extensão */}
-      <footer className="bg-white border-t border-slate-200 py-6 px-4 text-center text-xs text-slate-600">
-        <div className="max-w-4xl mx-auto space-y-2">
-          <p className="font-medium text-slate-800 flex items-center justify-center gap-1.5">
-            <HeartHandshake className="w-4 h-4 text-rose-500" />
-            Projeto de Extensão Universitária de Impacto Social • Tradutor de Burocracia & Saúde
-          </p>
-          <p className="leading-relaxed">
-            Desenvolvido para inclusão e acessibilidade cidadã (Conformidade WCAG 2.2 AA). Processamento seguro em memória volátil (RAM) com transmissão criptografada.
-          </p>
-          <div className="pt-1 flex items-center justify-center gap-4 text-slate-500">
-            <button
-              onClick={() => setIsConsentModalOpen(true)}
-              className="min-h-[44px] hover:text-slate-900 underline flex items-center gap-1.5 focus-visible:ring-4 focus-visible:ring-sky-500 rounded-lg px-2"
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Termos de Privacidade e IA</span>
-            </button>
+      <footer className="border-t border-ink/10 bg-paper-deep/60">
+        <div className="max-w-3xl mx-auto px-4 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-ink-muted">
+          <div>
+            <p className="font-display text-lg font-semibold text-ink">Tradutor Cidadão</p>
+            <p className="text-sm mt-1 max-w-[46ch]">
+              Projeto de extensão universitária. As fotos são lidas na memória temporária e não ficam salvas no servidor.
+            </p>
           </div>
+          <button onClick={() => setIsConsentModalOpen(true)} className="btn-secondary btn-sm self-start sm:self-auto">
+            <ShieldCheck className="w-4 h-4 text-pine-700" />
+            Privacidade e uso de IA
+          </button>
         </div>
       </footer>
     </div>

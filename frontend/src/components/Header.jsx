@@ -1,108 +1,80 @@
 import React from 'react';
-import { BookOpenText, Sparkles, HeartHandshake, Contrast, ZoomIn, ZoomOut, ShieldCheck } from 'lucide-react';
+import { Contrast, Minus, Plus } from 'lucide-react';
+
+const FONT_LEVEL_LABELS = ['Normal', 'Média', 'Grande', 'Máxima'];
+
+// Marca do projeto: uma folha de papel com ondas de som, desenhada à mão em SVG
+function LogoMark() {
+  return (
+    <svg viewBox="0 0 40 40" aria-hidden="true" className="w-10 h-10 sm:w-11 sm:h-11 flex-shrink-0">
+      <rect width="40" height="40" rx="12" className="fill-pine-700" />
+      <path d="M12 10.5h10.5l5.5 5.5v13.5a1.5 1.5 0 0 1-1.5 1.5h-14.5a1.5 1.5 0 0 1-1.5-1.5v-17.5a1.5 1.5 0 0 1 1.5-1.5Z" fill="#F6F3EE" />
+      <path d="M22.5 10.5v4a1.5 1.5 0 0 0 1.5 1.5h4" fill="none" stroke="#AFD5C7" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M14.5 20h7M14.5 24h5" stroke="#1A5E4C" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M24.5 21.5c1 .8 1 2.2 0 3M26.8 19.8c2 1.8 2 4.7 0 6.5" fill="none" stroke="#C2683C" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export default function Header({
   onIncreaseFont,
   onDecreaseFont,
   fontSizeLevel,
-  onOpenPrivacy,
   isHighContrast,
   onToggleHighContrast,
   healthMode = false
 }) {
   return (
-    <header className="bg-white border-b border-slate-200 shadow-xs sticky top-0 z-30">
-      <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Logo e Título */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-600 to-blue-800 flex items-center justify-center text-white shadow-md shadow-sky-600/20 flex-shrink-0">
-              <BookOpenText className="w-7 h-7" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                  Tradutor Cidadão
-                </h1>
-                <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  <Sparkles className="w-3 h-3" /> IA Acessível
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-600 font-medium">
-                {healthMode
-                  ? 'Receitas, exames e orientações de saúde com voz e letra grande'
-                  : 'Burocracia e Saúde explicados de forma simples e humana'}
-              </p>
-            </div>
+    <header className="sticky top-0 z-30 bg-paper/85 backdrop-blur-md border-b border-ink/10">
+      <div className="max-w-3xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <a href="#conteudo" className="plain-link flex items-center gap-3 rounded-2xl min-w-0">
+          <LogoMark />
+          <div className="min-w-0">
+            <span className="block font-display text-xl sm:text-2xl font-semibold leading-none text-ink">
+              Tradutor Cidadão
+            </span>
+            <span className="block text-sm text-ink-muted mt-1 truncate">
+              {healthMode ? 'Saúde explicada com calma' : 'Papéis do dia a dia, em palavras simples'}
+            </span>
           </div>
+        </a>
 
-          {/* Barra de Acessibilidade (Alto Contraste + Zoom Real A- / A+) */}
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            {/* Botão de Alto Contraste (Ícone + Texto) */}
+        {/* Ferramentas de leitura: contraste e tamanho da letra */}
+        <div className="flex items-center gap-2 w-full sm:w-auto" role="group" aria-label="Ajustes de leitura">
+          <button
+            onClick={onToggleHighContrast}
+            aria-pressed={isHighContrast}
+            aria-label={`Alto contraste: ${isHighContrast ? 'ligado' : 'desligado'}`}
+            className={`btn btn-sm border flex-shrink-0 ${
+              isHighContrast
+                ? 'bg-ink text-white border-ink'
+                : 'bg-white text-ink border-ink/15 hover:border-ink/30'
+            }`}
+          >
+            <Contrast className="w-4 h-4" />
+            <span className="hidden min-[440px]:inline">Contraste</span>
+          </button>
+
+          <div className="flex items-center flex-1 min-w-0 sm:flex-none justify-between rounded-full bg-white border border-ink/15 p-1">
             <button
-              onClick={onToggleHighContrast}
-              aria-pressed={isHighContrast}
-              aria-label={`Modo Alto Contraste: ${isHighContrast ? 'Ativado' : 'Desativado'}. Toque para alternar.`}
-              className={`min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-bold rounded-2xl border flex items-center gap-1.5 transition-all shadow-xs focus-visible:ring-4 focus-visible:ring-sky-500 ${
-                isHighContrast
-                  ? 'bg-black text-amber-300 border-amber-300 ring-2 ring-amber-300'
-                  : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border-slate-300'
-              }`}
+              onClick={onDecreaseFont}
+              disabled={fontSizeLevel <= 0}
+              aria-label="Diminuir o tamanho da letra"
+              className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-ink hover:bg-paper disabled:opacity-30 disabled:pointer-events-none transition-colors"
             >
-              <Contrast className="w-4 h-4" />
-              <span>Contraste</span>
+              <Minus className="w-4 h-4" />
             </button>
-
-            {/* Controles de Tamanho de Fonte (Ícone + Texto) */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-300 flex-shrink-0 shadow-xs">
-              <button
-                onClick={onDecreaseFont}
-                disabled={fontSizeLevel <= 0}
-                title="Diminuir tamanho da letra"
-                aria-label="Diminuir tamanho da letra"
-                className="min-h-[44px] min-w-[44px] px-3 py-2 text-xs font-black rounded-xl text-slate-800 hover:bg-white active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center justify-center gap-1 focus-visible:ring-4 focus-visible:ring-sky-500"
-              >
-                <ZoomOut className="w-3.5 h-3.5" />
-                <span>A-</span>
-              </button>
-
-              <span
-                aria-live="polite"
-                className="text-[11px] font-extrabold text-slate-700 px-2 min-w-[56px] text-center select-none"
-              >
-                {fontSizeLevel === 0 ? 'Normal' : fontSizeLevel === 1 ? 'Média' : fontSizeLevel === 2 ? 'Grande' : 'Máxima'}
-              </span>
-
-              <button
-                onClick={onIncreaseFont}
-                disabled={fontSizeLevel >= 3}
-                title="Aumentar tamanho da letra"
-                aria-label="Aumentar tamanho da letra"
-                className="min-h-[44px] min-w-[44px] px-3 py-2 text-xs font-black rounded-xl text-slate-800 hover:bg-white active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center justify-center gap-1 focus-visible:ring-4 focus-visible:ring-sky-500"
-              >
-                <ZoomIn className="w-3.5 h-3.5" />
-                <span>A+</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Faixa de Extensão Universitária e Privacidade */}
-        <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-600 gap-2">
-          <span className="inline-flex items-center gap-1.5 font-medium">
-            <HeartHandshake className="w-3.5 h-3.5 text-rose-500" />
-            Projeto de Extensão Universitária • Impacto Social Gratuito
-          </span>
-          <div className="flex items-center gap-3">
-            <span className="hidden md:inline text-slate-500">
-              Processamento temporário em RAM
+            <span aria-live="polite" className="px-1 sm:px-2 sm:min-w-[5.5rem] min-w-0 truncate text-center text-sm font-bold text-ink select-none">
+              <span aria-hidden="true" className="hidden sm:inline font-display text-base mr-1">Aa</span>
+              {FONT_LEVEL_LABELS[fontSizeLevel] || 'Normal'}
             </span>
             <button
-              onClick={onOpenPrivacy}
-              className="min-h-[44px] text-xs font-bold text-sky-800 hover:text-sky-950 underline flex items-center gap-1.5 focus-visible:ring-4 focus-visible:ring-sky-500 rounded-lg px-2"
+              onClick={onIncreaseFont}
+              disabled={fontSizeLevel >= 3}
+              aria-label="Aumentar o tamanho da letra"
+              className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-ink hover:bg-paper disabled:opacity-30 disabled:pointer-events-none transition-colors"
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Privacidade & IA (LGPD)</span>
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>

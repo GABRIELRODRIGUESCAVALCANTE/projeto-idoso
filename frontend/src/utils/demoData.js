@@ -598,3 +598,15 @@ export const HEALTH_DEMO_KEYS = [
   'receita_medica',
   'golpe_sus'
 ];
+
+/**
+ * Exemplos exibidos no modo completo, na ordem da apresentação.
+ */
+export const FULL_DEMO_KEYS = [
+  'conta_luz',
+  'golpe_adulterado',
+  'receita_medica',
+  'roteador_fibra',
+  'tela_azul',
+  'golpe_falso_suporte'
+];
