@@ -1,0 +1,68 @@
+1
+00:00:00,399 --> 00:00:09,105
+Tradutor Cidadão. Receitas, exames e orientações de saúde explicados em palavras simples e em voz alta.
+
+2
+00:00:09,105 --> 00:00:14,893
+Este é o Tradutor Cidadão. Ele explica papéis do dia a dia com palavras simples.
+
+3
+00:00:14,893 --> 00:00:20,786
+Na clínica ou no posto de saúde, toque em “Saúde” para ver só o que importa.
+
+4
+00:00:20,786 --> 00:00:26,019
+Para usar, tire uma foto do papel ou escolha um arquivo do celular.
+
+5
+00:00:26,019 --> 00:00:33,234
+Antes do primeiro envio, o aplicativo explica como a foto é tratada (LGPD).
+
+6
+00:00:33,234 --> 00:00:38,831
+Também dá para testar com exemplos prontos, sem foto e sem internet.
+
+7
+00:00:38,831 --> 00:00:45,260
+O resultado mostra o tipo de documento e uma explicação curta.
+
+8
+00:00:45,260 --> 00:00:57,142
+Toque no botão para ouvir. A frase que está sendo lida fica destacada.
+
+9
+00:00:57,142 --> 00:01:04,421
+Os sinais de alerta dizem quando procurar atendimento, com botão para ligar 192.
+
+10
+00:01:04,421 --> 00:01:09,643
+Em “O que fazer”, os cuidados viram passos curtos e numerados.
+
+11
+00:01:09,643 --> 00:01:18,564
+O profissional pode imprimir as orientações em letra grande para o paciente.
+
+12
+00:01:18,564 --> 00:01:31,522
+Ficou com dúvida? É só perguntar, por escrito ou pelo microfone. (resposta de exemplo)
+
+13
+00:01:31,522 --> 00:01:45,561
+Na receita do dentista, os remédios aparecem com horários sugeridos para a rotina.
+
+14
+00:01:45,561 --> 00:01:52,370
+Dá para criar um lembrete no celular ou enviar a lista ao cuidador pelo WhatsApp.
+
+15
+00:01:52,370 --> 00:02:10,396
+Para quem enxerga pouco: letra maior e alto contraste, a qualquer momento.
+
+16
+00:02:10,396 --> 00:02:22,283
+O aplicativo também alerta sobre golpes, como SMS falso em nome do SUS.
+
+17
+00:02:22,290 --> 00:02:30,504
+Tradutor Cidadão. Ajuda a entender, mas não substitui profissionais de saúde. Em emergência, ligue 192 (SAMU).
+
