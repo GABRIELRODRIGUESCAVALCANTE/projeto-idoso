@@ -6,6 +6,12 @@
 
 ---
 
+## 🎬 Vídeo Tutorial
+
+Veja o Modo Saúde funcionando em 2min30s, com narração: **[assistir / baixar o vídeo](docs/video/tutorial-tradutor-cidadao-narrado.mp4)** · [roteiro](docs/video/roteiro.md) · [legendas (.srt)](docs/video/legendas.srt)
+
+---
+
 ## 🎯 Objetivo e Impacto
 
 Muitos cidadãos e clientes enfrentam grandes barreiras de comunicação no seu dia a dia:
