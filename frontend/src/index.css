@@ -125,6 +125,9 @@
 .high-contrast main,
 .high-contrast section,
 .high-contrast .surface,
+.high-contrast .btn-secondary,
+.high-contrast .btn-quiet,
+.high-contrast .chip,
 .high-contrast [class*="bg-"] {
   background-color: #0d0d0d !important;
   background-image: none !important;
