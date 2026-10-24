@@ -164,13 +164,15 @@
 }
 
 .high-contrast .btn-primary,
-.high-contrast .karaoke-active {
+.high-contrast .karaoke-active,
+.high-contrast [role="radio"][aria-checked="true"] {
   background-color: #ffff00 !important;
   color: #000000 !important;
 }
 
 .high-contrast .btn-primary *,
-.high-contrast .karaoke-active * {
+.high-contrast .karaoke-active *,
+.high-contrast [role="radio"][aria-checked="true"] * {
   color: #000000 !important;
 }
 

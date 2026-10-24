@@ -6,9 +6,9 @@ import ResultCard from './components/ResultCard';
 import ConsentModal from './components/ConsentModal';
 import ProfessionalDisclaimer from './components/ProfessionalDisclaimer';
 import DemoExamples from './components/DemoExamples';
-import { AlertCircle, RotateCcw, Camera, BookOpenText, Volume2, ShieldCheck } from 'lucide-react';
+import { AlertCircle, RotateCcw, Camera, BookOpenText, Volume2, ShieldCheck, HeartPulse, LayoutGrid } from 'lucide-react';
 import { DEMO_PRESETS, HEALTH_DEMO_KEYS, FULL_DEMO_KEYS } from './utils/demoData';
-import { getAppMode } from './utils/appMode';
+import { getAppMode, saveAppMode } from './utils/appMode';
 
 const HOW_IT_WORKS = [
   { icon: Camera, title: 'Fotografe', text: 'Receita, pedido de exame, conta ou aviso.' },
@@ -17,8 +17,16 @@ const HOW_IT_WORKS = [
 ];
 
 export default function App() {
-  const [appMode] = useState(getAppMode);
+  const [appMode, setAppMode] = useState(getAppMode);
   const healthMode = appMode === 'saude';
+
+  const handleChangeMode = (mode) => {
+    if (mode === appMode) return;
+    saveAppMode(mode);
+    setAppMode(mode);
+    setResult(null);
+    setError(null);
+  };
 
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -200,6 +208,30 @@ export default function App() {
         {/* Abertura da página inicial */}
         {isHome && (
           <div className="animate-fade-up px-1">
+            {/* Seletor de modo: Saúde ou todos os documentos */}
+            <div role="radiogroup" aria-label="O que você quer entender?" className="mb-6 inline-flex w-full sm:w-auto rounded-full bg-paper-deep p-1 border border-ink/10">
+              {[
+                { mode: 'saude', label: 'Saúde', icon: HeartPulse },
+                { mode: 'completo', label: 'Todos os documentos', icon: LayoutGrid }
+              ].map(({ mode, label, icon: Icon }) => {
+                const active = appMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => handleChangeMode(mode)}
+                    className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-full px-4 sm:px-5 min-h-[44px] text-sm sm:text-base font-bold transition-all duration-200 ${
+                      active ? 'bg-white text-ink shadow-soft' : 'text-ink-muted hover:text-ink'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-pine-700' : ''}`} />
+                    <span className="truncate">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
             <p className="eyebrow">Projeto de extensão universitária · gratuito</p>
             <h1 className="mt-2 font-display text-[2.1rem] leading-[1.1] sm:text-5xl sm:leading-[1.05] font-semibold text-ink max-w-[18ch]">
               {healthMode ? 'Entenda seus papéis de saúde, sem pressa.' : 'Entenda seus papéis, sem complicação.'}

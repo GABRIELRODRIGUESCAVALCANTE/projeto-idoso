@@ -4,7 +4,8 @@
  * - 'saude': foco em clínicas odontológicas e postos de saúde (UBS), sem telas de TI/Help Desk.
  *
  * Ativação: parâmetro de URL `?modo=saude` (ou `?modo=completo` para voltar),
- * ou variável de build `VITE_APP_MODE=saude`. A escolha via URL fica salva no navegador.
+ * ou variável de build `VITE_APP_MODE=saude`, ou pelo seletor na página inicial.
+ * A escolha fica salva no navegador.
  */
 const STORAGE_KEY = 'app_modo';
 const VALID_MODES = ['saude', 'completo'];
@@ -22,6 +23,19 @@ export function getAppMode() {
     // Navegação privada ou armazenamento bloqueado: segue para o padrão de build
   }
   return import.meta.env.VITE_APP_MODE === 'saude' ? 'saude' : 'completo';
+}
+
+// Salva a escolha feita no seletor e mantém o endereço coerente (útil para copiar o link ou gerar QR Code)
+export function saveAppMode(mode) {
+  if (!VALID_MODES.includes(mode)) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, mode);
+    const url = new URL(window.location.href);
+    url.searchParams.set('modo', mode);
+    window.history.replaceState(null, '', url);
+  } catch {
+    // Armazenamento ou histórico indisponível: a troca vale só para esta visita
+  }
 }
 
 // Categorias tratadas como documentos de saúde (alertas conservadores e impressão em letra grande)
