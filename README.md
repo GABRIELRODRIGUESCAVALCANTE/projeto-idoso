@@ -89,7 +89,8 @@ graph TD
 Versão focada para apresentações e uso em **clínicas odontológicas** e **Unidades Básicas de Saúde (UBS)**. Esconde as telas de suporte de TI/Help Desk e destaca apenas o que importa para pacientes, cuidadores e profissionais de saúde.
 
 **Como ativar:**
-* Abra a aplicação com `?modo=saude` na URL (ex: `http://localhost:5173/?modo=saude`). A escolha fica salva no navegador; use `?modo=completo` para voltar.
+* Na página inicial, toque em **Saúde** no seletor "Saúde / Todos os documentos". A escolha fica salva no navegador.
+* Ou abra a aplicação com `?modo=saude` na URL (ex: `http://localhost:5173/?modo=saude`). A escolha fica salva no navegador; use `?modo=completo` para voltar.
 * Ou gere o build já no Modo Saúde com `VITE_APP_MODE=saude npm run build`.
 
 **O que muda:**
